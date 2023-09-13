@@ -132,7 +132,7 @@ def diagonales(bmax, i, nh):
 
         b = np.full(nh, -0.5)
 
-        b[2] = 0.
+        b[2] = 0.5 # correccion
 
     elif (i == 5):
 
@@ -143,7 +143,7 @@ def diagonales(bmax, i, nh):
 
     elif (i == 6):
 
-        b = np.full(nh, -1.5)
+        b = np.full(nh, -1.) #correccion
 
         b[1] = 0.
         b[2] = 0.
@@ -186,8 +186,8 @@ def diagonales(bmax, i, nh):
 
         b = np.full(nh, -1.)
 
-        b[nh-2] = 0.5
-        b[nh-1] = 0.5
+        b[nh-2] = 0. #correccion
+        b[nh-1] = 0. #correccion
 
     elif (i == 14):
 
@@ -201,7 +201,7 @@ def diagonales(bmax, i, nh):
 
         b = np.full(nh, -2.)
     else:
-        b = np.full(nh, 0.5)
+        b = np.full(nh, 0.) # correccion
 
     b = bmax*b
 
