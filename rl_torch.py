@@ -170,7 +170,7 @@ class Agent(object):
                                          dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
-        self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool)
+        self.terminal_memory = np.zeros(self.mem_size, dtype= bool)
 
     def store_transition(self, state, action, reward, state_, terminal):
         index = self.mem_cntr % self.mem_size
@@ -277,7 +277,7 @@ if __name__ == '__main__':
                                     observation_, done)
             observation = observation_
             
-            if (indt % 1 == 0):
+            if (indt % 5 == 0):
                 agent.learn()
 
             fid = np.real(observation[nh-1]*np.conjugate(observation[nh-1]))
@@ -304,7 +304,8 @@ if __name__ == '__main__':
         avg_tf = np.mean(tmaxs[max(0, i-100):(i+1)])
 
         print('episode: ', i, 'score: %.2f' % score,
-              'average score %.2f' % avg_score, 'fidelidad: %.2f' % fid)
+              'average score %.2f' % avg_score, 'fidelidad: %.2f' % fid0, 
+              'fid. media: %.2f' %avg_fids)
 
         row = [i, np.real(fid0), np.real(tfmax), np.real(score),
                np.real(avg_fids), np.real(avg_tf), np.real(avg_score),
