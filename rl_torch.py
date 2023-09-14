@@ -42,7 +42,7 @@ class MyEnv(Env):
 
                 self.propagadores[j, :, :] = (
                     self.propagadores[j, :, :]
-                    + cm.exp(-comp_i * dt * self.en[j, k]) * p
+                    + cm.exp(-comp_i * self.dt * self.en[j, k]) * p
                 )
             
             self.propagadores[j,:,:] = np.matmul(self.bases[j,:,:],self.propagadores[j,:,:])
