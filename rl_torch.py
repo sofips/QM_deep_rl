@@ -33,17 +33,21 @@ class MyEnv(Env):
         self.tol = 0.05                      # tolerancia
         self.tmax = 32                       # tiempo maximo
 
-        for j in range(0, 16):
+        for j in range(0, 16): # para cada matriz de accion
 
             self.en[j, :], self.bases[j, :, :] = la.eig(self.mat_acc[j, :, :])
 
             for k in range(0, nh):
-                p = np.outer(self.bases[j, k, :], self.bases[j, k, :])
+                p = np.outer(self.bases[j, :, k], self.bases[j, :,k])
 
                 self.propagadores[j, :, :] = (
                     self.propagadores[j, :, :]
-                    + cm.exp(-comp_i * self.dt * self.en[j, k]) * p
+                    + cm.exp(-comp_i * dt * self.en[j, k]) * p
                 )
+            
+            self.propagadores[j,:,:] = np.matmul(self.bases[j,:,:],self.propagadores[j,:,:])
+            self.propagadores[j,:,:] = np.matmul(self.propagadores[j,:,:],np.transpose(self.bases[j,:,:]))
+
 
         c0 = np.zeros(nh, dtype=np.complex_)
         self.e0, self.base0 = rk.gen_base(nh)
