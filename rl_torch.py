@@ -255,7 +255,7 @@ class Agent(object):
         self.Q_eval.optimizer.step()
 
         self.iter_cntr += 1
-        self.epsilon = self.epsilon - self.eps_dec \
+        self.epsilon = self.epsilon * self.eps_dec \
             if self.epsilon > self.eps_min else self.eps_min
 
 
@@ -336,7 +336,7 @@ if __name__ == '__main__':
 
         print('episode: ', i, 'score: %.2f' % score,
               'average score %.2f' % avg_score, 'fidelidad: %.2f' % fid0, 
-              'fid. media: %.2f' %avg_fids)
+              'fid. media: %.2f' %avg_fids, 'epsilon: %.2f' %agent.epsilon)
 
         row = [i, np.real(fid0), np.real(tfmax), np.real(score),
                np.real(avg_fids), np.real(avg_tf), np.real(avg_score),
