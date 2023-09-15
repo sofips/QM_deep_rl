@@ -21,7 +21,7 @@ class MyEnv(Env):
                                      high=np.ones(nh, dtype=np.complex_))
         self.n = nh
         # valor del campo magnetico
-        self.bm = 200
+        self.bm = 100
         self.mat_acc = rk.acciones(self.bm, nh)
         comp_i = complex(0, 1)
         self.en = np.zeros((16, nh), dtype=np.complex_)
@@ -78,7 +78,6 @@ class MyEnv(Env):
              print('Propagacion de autoestados: correcta')
 
         c0 = np.zeros(nh, dtype=np.complex_)
-        self.e0, self.base0 = rk.gen_base(nh)
         c0[0] = 1.
 
     def step(self, action):
