@@ -264,7 +264,7 @@ class Agent(object):
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    nh = 9
+    nh = 7
     env = MyEnv(nh)
     states = env.observation_space.shape
     actions = env.action_space.n
