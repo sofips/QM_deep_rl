@@ -27,23 +27,55 @@ class MyEnv(Env):
         self.en = np.zeros((16, nh), dtype=np.complex_)
         self.bases = np.zeros((16, nh, nh), dtype=np.complex_)
         self.propagadores = np.zeros((16, nh, nh), dtype=np.complex_)
+        self.desc_esp = np.zeros((16, nh, nh), dtype=np.complex_)
 
         self.t = 0.                          # inicializo el tiempo en 0
         self.dt = 0.15                       # intervalos de tiempo
-        self.tol = 0.05                      # tolerancia
+        self.tol = 0.01                      # tolerancia
         self.tmax = 32                       # tiempo maximo
 
-        for j in range(0, 16):
 
-            self.en[j, :], self.bases[j, :, :] = la.eig(self.mat_acc[j, :, :])
+        for j in range(0, 16): # para cada matriz de accion
 
-            for k in range(0, nh):
-                p = np.outer(self.bases[j, k, :], self.bases[j, k, :])
+                        self.en[j, :], self.bases[j, :, :] = la.eig(self.mat_acc[j, :, :])
 
-                self.propagadores[j, :, :] = (
-                    self.propagadores[j, :, :]
-                    + cm.exp(-comp_i * self.dt * self.en[j, k]) * p
-                )
+                        for k in range(0, nh):
+                            p = np.outer(self.bases[j, :, k], self.bases[j, :,k])
+
+                            self.propagadores[j, :, :] = (
+                                self.propagadores[j, :, :]
+                                + cm.exp(-comp_i * self.dt * self.en[j, k]) * p
+                            )
+
+                            self.desc_esp[j,:,:] = self.desc_esp[j,:,:] + p * self.en[j, k]
+
+
+        # check de descomposición espectral
+        check_de = True
+
+        for k in np.arange(0,16):
+                for i in np.arange(0,nh):
+                        for j in np.arange(0,nh):
+        
+                            if self.mat_acc[k,i,j]-self.desc_esp[k,i,j] > 1E-8:
+                                    print('error desc. esp')
+                                    check_de = False
+        
+        if check_de:
+             print('Descomposicion espectral: correcta')
+                            
+        check_prop = True
+
+        for a in np.arange(0,16):
+            for j in np.arange(0,nh):
+                    errores = np.matmul(self.propagadores[a,:,:],self.bases[a,:,j]) - np.exp(-comp_i*self.dt*self.en[a,j])*self.bases[a,:,j] 
+                    et = np.sum(errores)
+                    if la.norm(et)>1E-8:
+                         print('error en propagacion')
+                         check_prop = False
+                         
+        if check_prop:
+             print('Propagacion de autoestados: correcta')
 
         c0 = np.zeros(nh, dtype=np.complex_)
         self.e0, self.base0 = rk.gen_base(nh)
@@ -60,12 +92,15 @@ class MyEnv(Env):
         elif (0.8 <= fid <= 1 - self.tol):
             reward = 100 / (1 + np.exp(10 * (1 - self.tol - fid)))
         else:
-            reward = 2500
+            reward = 25000
 
         if (fid >= 1 - self.tol) or (self.t >= self.tmax):
             done = True
         else:
             done = False
+
+        if abs(la.norm(self.state) - 1.)>1E8:
+            print('FALLO EN LA NORMALIZACION',la.norm(self.state))
 
         info = {}
 
@@ -148,7 +183,7 @@ class DeepQNetwork(nn.Module):
 class Agent(object):
 
     def __init__(self, gamma, epsilon, lr, nh, batch_size, n_actions,
-                 max_mem_size=100000, eps_end=0.01, eps_dec=0.999999):
+                 max_mem_size=40000, eps_end=0.01, eps_dec=0.999969):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
@@ -223,7 +258,7 @@ class Agent(object):
         self.Q_eval.optimizer.step()
 
         self.iter_cntr += 1
-        self.epsilon = self.epsilon - self.eps_dec \
+        self.epsilon = self.epsilon *self.eps_dec \
             if self.epsilon > self.eps_min else self.eps_min
 
 
@@ -231,7 +266,6 @@ class Agent(object):
 if __name__ == '__main__':
 
     nh = 7
-    bm = 100
     env = MyEnv(nh)
     states = env.observation_space.shape
     actions = env.action_space.n
@@ -249,7 +283,7 @@ if __name__ == '__main__':
     eps_history = []
 
     dt = 0.15
-    f1 = open("test.dat", "w")
+    f1 = open("test2.dat", "w")
     writer = csv.writer(f1)
     
     for i in range(n_games):
@@ -262,10 +296,10 @@ if __name__ == '__main__':
         indt = 0
         tfmax = 0.
 
-        if (i % 1000 == 0):
-            fname = 'fid_eps_' + str(i) + '.dat'
-            f2 = open(fname, "w")
-            writer2 = csv.writer(f2)
+        #if (i % 1000 == 0):
+         #   fname = 'fid_eps_' + str(i) + '.dat'
+          #  f2 = open(fname, "w")
+           # writer2 = csv.writer(f2)
 
         while not done:
             indt += 1
@@ -277,7 +311,7 @@ if __name__ == '__main__':
                                     observation_, done)
             observation = observation_
             
-            if (indt % 5 == 0):
+            if (indt % 33 == 0):
                 agent.learn()
 
             fid = np.real(observation[nh-1]*np.conjugate(observation[nh-1]))
@@ -286,13 +320,13 @@ if __name__ == '__main__':
                 fid0 = np.real(fid)
                 tfmax = t
 
-            if (i % 1000 == 0):
-                c02 = np.real(observation[0]*np.conjugate(observation[0]))
-                row2 = [t, c02, fid]
-                writer2.writerow(row2)
+            #if (i % 1000 == 0):
+                #c02 = np.real(observation[0]*np.conjugate(observation[0]))
+                #row2 = [t, c02, fid]
+                #writer2.writerow(row2)
 
-        if (i % 1000 == 0):
-            f2.close()
+        #if (i % 1000 == 0):
+            #f2.close()
 
         eps_history.append(agent.epsilon)
         scores.append(score)
@@ -305,7 +339,7 @@ if __name__ == '__main__':
 
         print('episode: ', i, 'score: %.2f' % score,
               'average score %.2f' % avg_score, 'fidelidad: %.2f' % fid0, 
-              'fid. media: %.2f' %avg_fids)
+              'fid. media: %.2f' %avg_fids, 'epsilon: %.2f' %agent.epsilon)
 
         row = [i, np.real(fid0), np.real(tfmax), np.real(score),
                np.real(avg_fids), np.real(avg_tf), np.real(avg_score),
@@ -314,7 +348,7 @@ if __name__ == '__main__':
         writer.writerow(row)
 
         #if i % 100 == 0 and i > 0:
-            #agent.save_model()
+         #   agent.save_model()
         
     f1.close()
 
