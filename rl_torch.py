@@ -21,7 +21,7 @@ class MyEnv(Env):
                                      high=np.ones(nh, dtype=np.complex_))
         self.n = nh
         # valor del campo magnetico
-        self.bm = 100
+        self.bm = 200
         self.mat_acc = rk.acciones(self.bm, nh)
         comp_i = complex(0, 1)
         self.en = np.zeros((16, nh), dtype=np.complex_)
@@ -92,7 +92,7 @@ class MyEnv(Env):
         elif (0.8 <= fid <= 1 - self.tol):
             reward = 100 / (1 + np.exp(10 * (1 - self.tol - fid)))
         else:
-            reward = 25000
+            reward = 2500
 
         if (fid >= 1 - self.tol) or (self.t >= self.tmax):
             done = True
@@ -183,7 +183,7 @@ class DeepQNetwork(nn.Module):
 class Agent(object):
 
     def __init__(self, gamma, epsilon, lr, nh, batch_size, n_actions,
-                 max_mem_size=40000, eps_end=0.01, eps_dec=0.999969):
+                 max_mem_size=40000, eps_end=0.01, eps_dec=0.9999):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
@@ -265,7 +265,7 @@ class Agent(object):
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    nh = 7
+    nh = 9
     env = MyEnv(nh)
     states = env.observation_space.shape
     actions = env.action_space.n
@@ -311,7 +311,7 @@ if __name__ == '__main__':
                                     observation_, done)
             observation = observation_
             
-            if (indt % 33 == 0):
+            if (indt % 32 == 0):
                 agent.learn()
 
             fid = np.real(observation[nh-1]*np.conjugate(observation[nh-1]))
