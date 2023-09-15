@@ -47,25 +47,35 @@ class MyEnv(Env):
                                 + cm.exp(-comp_i * self.dt * self.en[j, k]) * p
                             )
 
-                            self.desc_esp[j,:,:] = self.desc_esp[j,:,:] + np.outer(self.bases[j, :, k], self.bases[j, :,k]) * self.en[j, k]
+                            self.desc_esp[j,:,:] = self.desc_esp[j,:,:] + p * self.en[j, k]
+
+
+        # check de descomposición espectral
+        check_de = True
 
         for k in np.arange(0,16):
                 for i in np.arange(0,nh):
                         for j in np.arange(0,nh):
-                    
+        
                             if self.mat_acc[k,i,j]-self.desc_esp[k,i,j] > 1E-8:
-                                    print('error')
+                                    print('error desc. esp')
+                                    check_de = False
+        
+        if check_de:
+             print('Descomposicion espectral: correcta')
                             
-
-
-        errores = np.matmul(self.propagadores[2,:,:],self.bases[2,:,2]) - np.exp(-comp_i*self.dt*self.en[2,2])*self.bases[2,:,2] 
-        et = np.sum(errores)
+        check_prop = True
 
         for a in np.arange(0,16):
             for j in np.arange(0,nh):
                     errores = np.matmul(self.propagadores[a,:,:],self.bases[a,:,j]) - np.exp(-comp_i*self.dt*self.en[a,j])*self.bases[a,:,j] 
                     et = np.sum(errores)
-
+                    if la.norm(et)>1E-8:
+                         print('error en propagacion')
+                         check_prop = False
+                         
+        if check_prop:
+             print('Propagacion de autoestados: correcta')
 
         c0 = np.zeros(nh, dtype=np.complex_)
         self.e0, self.base0 = rk.gen_base(nh)
