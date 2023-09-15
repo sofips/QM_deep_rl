@@ -31,7 +31,7 @@ class MyEnv(Env):
 
         self.t = 0.                          # inicializo el tiempo en 0
         self.dt = 0.15                       # intervalos de tiempo
-        self.tol = 0.05                      # tolerancia
+        self.tol = 0.01                      # tolerancia
         self.tmax = 32                       # tiempo maximo
 
 
@@ -92,7 +92,7 @@ class MyEnv(Env):
         elif (0.8 <= fid <= 1 - self.tol):
             reward = 100 / (1 + np.exp(10 * (1 - self.tol - fid)))
         else:
-            reward = 2500
+            reward = 25000
 
         if (fid >= 1 - self.tol) or (self.t >= self.tmax):
             done = True
@@ -180,7 +180,7 @@ class DeepQNetwork(nn.Module):
 class Agent(object):
 
     def __init__(self, gamma, epsilon, lr, nh, batch_size, n_actions,
-                 max_mem_size=100000, eps_end=0.01, eps_dec=0.999999):
+                 max_mem_size=40000, eps_end=0.01, eps_dec=0.9999):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
@@ -263,7 +263,6 @@ class Agent(object):
 if __name__ == '__main__':
 
     nh = 7
-    bm = 100
     env = MyEnv(nh)
     states = env.observation_space.shape
     actions = env.action_space.n
@@ -281,7 +280,7 @@ if __name__ == '__main__':
     eps_history = []
 
     dt = 0.15
-    f1 = open("test.dat", "w")
+    f1 = open("test_n7_t5.dat", "w")
     writer = csv.writer(f1)
     
     for i in range(n_games):
@@ -309,7 +308,7 @@ if __name__ == '__main__':
                                     observation_, done)
             observation = observation_
             
-            if (indt % 5 == 0):
+            if (indt % 33 == 0):
                 agent.learn()
 
             fid = np.real(observation[nh-1]*np.conjugate(observation[nh-1]))
