@@ -344,8 +344,8 @@ if __name__ == '__main__':
                ]
         writer.writerow(row)
 
-        if i % 100 == 0 and i > 0:
-            agent.save_model()
+        #if i % 100 == 0 and i > 0:
+         #   agent.save_model()
         
     f1.close()
 
