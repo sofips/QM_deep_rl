@@ -293,10 +293,10 @@ if __name__ == '__main__':
         indt = 0
         tfmax = 0.
 
-        if (i % 1000 == 0):
-            fname = 'fid_eps_' + str(i) + '.dat'
-            f2 = open(fname, "w")
-            writer2 = csv.writer(f2)
+        #if (i % 1000 == 0):
+         #   fname = 'fid_eps_' + str(i) + '.dat'
+          #  f2 = open(fname, "w")
+           # writer2 = csv.writer(f2)
 
         while not done:
             indt += 1
@@ -317,13 +317,13 @@ if __name__ == '__main__':
                 fid0 = np.real(fid)
                 tfmax = t
 
-            if (i % 1000 == 0):
-                c02 = np.real(observation[0]*np.conjugate(observation[0]))
-                row2 = [t, c02, fid]
-                writer2.writerow(row2)
+            #if (i % 1000 == 0):
+                #c02 = np.real(observation[0]*np.conjugate(observation[0]))
+                #row2 = [t, c02, fid]
+                #writer2.writerow(row2)
 
-        if (i % 1000 == 0):
-            f2.close()
+        #if (i % 1000 == 0):
+            #f2.close()
 
         eps_history.append(agent.epsilon)
         scores.append(score)
@@ -344,8 +344,8 @@ if __name__ == '__main__':
                ]
         writer.writerow(row)
 
-        #if i % 100 == 0 and i > 0:
-            #agent.save_model()
+        if i % 100 == 0 and i > 0:
+            agent.save_model()
         
     f1.close()
 
