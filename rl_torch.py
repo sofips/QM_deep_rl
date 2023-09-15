@@ -280,7 +280,7 @@ if __name__ == '__main__':
     eps_history = []
 
     dt = 0.15
-    f1 = open("test_n7_t5.dat", "w")
+    f1 = open("test2.dat", "w")
     writer = csv.writer(f1)
     
     for i in range(n_games):
