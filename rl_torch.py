@@ -21,7 +21,7 @@ class MyEnv(Env):
                                      high=np.ones(nh, dtype=np.complex_))
         self.n = nh
         # valor del campo magnetico
-        self.bm = 200
+        self.bm = 100
         self.mat_acc = rk.acciones(self.bm, nh)
         comp_i = complex(0, 1)
         self.en = np.zeros((16, nh), dtype=np.complex_)
@@ -183,7 +183,7 @@ class DeepQNetwork(nn.Module):
 class Agent(object):
 
     def __init__(self, gamma, epsilon, lr, nh, batch_size, n_actions,
-                 max_mem_size=40000, eps_end=0.01, eps_dec=0.9999):
+                 max_mem_size=40000, eps_end=0.01, eps_dec=0.999969):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
@@ -258,7 +258,7 @@ class Agent(object):
         self.Q_eval.optimizer.step()
 
         self.iter_cntr += 1
-        self.epsilon = self.epsilon * self.eps_dec \
+        self.epsilon = self.epsilon *self.eps_dec \
             if self.epsilon > self.eps_min else self.eps_min
 
 
