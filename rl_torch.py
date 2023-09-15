@@ -21,32 +21,50 @@ class MyEnv(Env):
                                      high=np.ones(nh, dtype=np.complex_))
         self.n = nh
         # valor del campo magnetico
-        self.bm = 100
+        self.bm = 200
         self.mat_acc = rk.acciones(self.bm, nh)
         comp_i = complex(0, 1)
         self.en = np.zeros((16, nh), dtype=np.complex_)
         self.bases = np.zeros((16, nh, nh), dtype=np.complex_)
         self.propagadores = np.zeros((16, nh, nh), dtype=np.complex_)
+        self.desc_esp = np.zeros((16, nh, nh), dtype=np.complex_)
 
         self.t = 0.                          # inicializo el tiempo en 0
         self.dt = 0.15                       # intervalos de tiempo
         self.tol = 0.05                      # tolerancia
         self.tmax = 32                       # tiempo maximo
 
+
         for j in range(0, 16): # para cada matriz de accion
 
-            self.en[j, :], self.bases[j, :, :] = la.eig(self.mat_acc[j, :, :])
+                        self.en[j, :], self.bases[j, :, :] = la.eig(self.mat_acc[j, :, :])
 
-            for k in range(0, nh):
-                p = np.outer(self.bases[j, :, k], self.bases[j, :,k])
+                        for k in range(0, nh):
+                            p = np.outer(self.bases[j, :, k], self.bases[j, :,k])
 
-                self.propagadores[j, :, :] = (
-                    self.propagadores[j, :, :]
-                    + cm.exp(-comp_i * self.dt * self.en[j, k]) * p
-                )
-            
-            self.propagadores[j,:,:] = np.matmul(self.bases[j,:,:],self.propagadores[j,:,:])
-            self.propagadores[j,:,:] = np.matmul(self.propagadores[j,:,:],np.transpose(self.bases[j,:,:]))
+                            self.propagadores[j, :, :] = (
+                                self.propagadores[j, :, :]
+                                + cm.exp(-comp_i * self.dt * self.en[j, k]) * p
+                            )
+
+                            self.desc_esp[j,:,:] = self.desc_esp[j,:,:] + np.outer(self.bases[j, :, k], self.bases[j, :,k]) * self.en[j, k]
+
+        for k in np.arange(0,16):
+                for i in np.arange(0,nh):
+                        for j in np.arange(0,nh):
+                    
+                            if self.mat_acc[k,i,j]-self.desc_esp[k,i,j] > 1E-8:
+                                    print('error')
+                            
+
+
+        errores = np.matmul(self.propagadores[2,:,:],self.bases[2,:,2]) - np.exp(-comp_i*self.dt*self.en[2,2])*self.bases[2,:,2] 
+        et = np.sum(errores)
+
+        for a in np.arange(0,16):
+            for j in np.arange(0,nh):
+                    errores = np.matmul(self.propagadores[a,:,:],self.bases[a,:,j]) - np.exp(-comp_i*self.dt*self.en[a,j])*self.bases[a,:,j] 
+                    et = np.sum(errores)
 
 
         c0 = np.zeros(nh, dtype=np.complex_)

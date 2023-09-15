@@ -132,10 +132,10 @@ def acciones(bmax, nh):
 
         b = diagonales(bmax, i, nh)
 
-        J = -0.5
+        J =  -0.5 #[-0.5*np.sqrt((nh-k)*k) for k in np.arange(1,nh,1)]
 
         for k in range(0, nh-1):
-            mat_acc[i, k, k+1] = J
+            mat_acc[i, k, k+1] = J[k]
             mat_acc[i, k+1, k] = mat_acc[i, k, k+1]
 
         for k in range(0, nh):
