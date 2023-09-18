@@ -31,8 +31,8 @@ class MyEnv(Env):
 
         self.t = 0.                          # inicializo el tiempo en 0
         self.dt = 0.15                       # intervalos de tiempo
-        self.tol = 0.01                      # tolerancia
-        self.tmax = 32                       # tiempo maximo
+        self.tol = 0.05                      # tolerancia
+        self.tmax = 32                      # tiempo maximo
 
 
         for j in range(0, 16): # para cada matriz de accion
@@ -182,7 +182,7 @@ class DeepQNetwork(nn.Module):
 class Agent(object):
 
     def __init__(self, gamma, epsilon, lr, nh, batch_size, n_actions,
-                 max_mem_size=40000, eps_end=0.01, eps_dec=0.9999):
+                 max_mem_size=40000, eps_end=0.01, eps_dec=0.0001):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
@@ -193,11 +193,11 @@ class Agent(object):
         self.batch_size = batch_size
         self.mem_cntr = 0
         self.iter_cntr = 0
-        self.replace_target = 100
+        self.replace_target = 200
 
         self.Q_eval = DeepQNetwork(lr, 
                                    nh=nh,
-                                   fc1_dims=256, fc2_dims=256, n_actions=n_actions)
+                                   fc1_dims=120, fc2_dims=120, n_actions=n_actions)
         self.state_memory = np.zeros((self.mem_size, *nh),
                                      dtype=np.float32)
         self.new_state_memory = np.zeros((self.mem_size, *nh),
@@ -257,7 +257,7 @@ class Agent(object):
         self.Q_eval.optimizer.step()
 
         self.iter_cntr += 1
-        self.epsilon = self.epsilon *self.eps_dec \
+        self.epsilon = self.epsilon - self.eps_dec \
             if self.epsilon > self.eps_min else self.eps_min
 
 
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     eps_history = []
 
     dt = 0.15
-    f1 = open("test2.dat", "w")
+    f1 = open("n7_t40.dat", "w")
     writer = csv.writer(f1)
     
     for i in range(n_games):
