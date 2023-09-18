@@ -16,7 +16,7 @@ class MyEnv(Env):
 
     def __init__(self, nh):  # esto inicializa el ambiente
 
-        self.action_space = Discrete(16)  # 16 acciones posibles
+        self.action_space = Discrete(15)  # 15!!!! acciones posibles
         self.observation_space = Box(low=np.zeros(nh, dtype=np.complex_),
                                      high=np.ones(nh, dtype=np.complex_))
         self.n = nh
@@ -24,10 +24,10 @@ class MyEnv(Env):
         self.bm = 100
         self.mat_acc = rk.acciones(self.bm, nh)
         comp_i = complex(0, 1)
-        self.en = np.zeros((16, nh), dtype=np.complex_)
-        self.bases = np.zeros((16, nh, nh), dtype=np.complex_)
-        self.propagadores = np.zeros((16, nh, nh), dtype=np.complex_)
-        self.desc_esp = np.zeros((16, nh, nh), dtype=np.complex_)
+        self.en = np.zeros((15, nh), dtype=np.complex_)
+        self.bases = np.zeros((15, nh, nh), dtype=np.complex_)
+        self.propagadores = np.zeros((15, nh, nh), dtype=np.complex_)
+        self.desc_esp = np.zeros((15, nh, nh), dtype=np.complex_)
 
         self.t = 0.                          # inicializo el tiempo en 0
         self.dt = 0.15                      # intervalos de tiempo
@@ -35,7 +35,7 @@ class MyEnv(Env):
         self.tmax = 32                      # tiempo maximo
 
 
-        for j in range(0, 16): # para cada matriz de accion
+        for j in range(0, 15): # para cada matriz de accion
 
                         self.en[j, :], self.bases[j, :, :] = la.eig(self.mat_acc[j, :, :])
 
@@ -53,7 +53,7 @@ class MyEnv(Env):
         # check de descomposición espectral
         check_de = True
 
-        for k in np.arange(0,16):
+        for k in np.arange(0,15):
                 for i in np.arange(0,nh):
                         for j in np.arange(0,nh):
         
@@ -66,7 +66,7 @@ class MyEnv(Env):
                             
         check_prop = True
 
-        for a in np.arange(0,16):
+        for a in np.arange(0,15):
             for j in np.arange(0,nh):
                     errores = np.matmul(self.propagadores[a,:,:],self.bases[a,:,j]) - np.exp(-comp_i*self.dt*self.en[a,j])*self.bases[a,:,j] 
                     et = np.sum(errores)
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     lr = 0.01
     n_games = 50000
   
-    agent =  Agent(gamma=0.95, epsilon=1.0, batch_size=32, n_actions=16, eps_end=0.01,
+    agent =  Agent(gamma=0.95, epsilon=1.0, batch_size=32, n_actions=15, eps_end=0.01,
                   nh=[nh], lr=lr)
 
     scores = []
