@@ -111,9 +111,9 @@ def diagonales(bmax, i, nh):
 
 def acciones(bmax, nh):
 
-    mat_acc = np.zeros((16, nh, nh))
+    mat_acc = np.zeros((15, nh, nh))
 
-    for i in range(0, 16):
+    for i in range(0, 15):
 
         b = diagonales(bmax, i, nh)
 
