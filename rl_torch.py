@@ -2,7 +2,7 @@ import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
+import sys
 from gym import Env
 from gym.spaces import Discrete, Box
 import numpy as np
@@ -30,7 +30,7 @@ class MyEnv(Env):
         self.desc_esp = np.zeros((16, nh, nh), dtype=np.complex_)
 
         self.t = 0.                          # inicializo el tiempo en 0
-        self.dt = 0.15                       # intervalos de tiempo
+        self.dt = 0.15                      # intervalos de tiempo
         self.tol = 0.05                      # tolerancia
         self.tmax = 32                      # tiempo maximo
 
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     eps_history = []
 
     dt = 0.15
-    f1 = open("n7_t40.dat", "w")
+    f1 = open(sys.argv[1], "w")
     writer = csv.writer(f1)
     
     for i in range(n_games):
