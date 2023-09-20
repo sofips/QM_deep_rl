@@ -288,7 +288,7 @@ if __name__ == '__main__':
     dt = env.dt
 
     lr = 0.01
-    n_games = 1000
+    n_games = 50000
     agent =  Agent(gamma=0.95, epsilon=1.0, batch_size=32, n_actions=16, eps_end=0.01,
                   n2=[2*nh], lr=lr)
 
