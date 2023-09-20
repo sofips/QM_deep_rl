@@ -205,7 +205,7 @@ class Agent(object):
         self.replace_target = 200
 
         self.Q_eval = DeepQNetwork(lr, 
-                                   nh=2*nh,
+                                   nh=nh,
                                    fc1_dims=120, fc2_dims=120, n_actions=n_actions)
         self.state_memory = np.zeros((self.mem_size, *(2*nh)),
                                      dtype=np.float32)
