@@ -143,6 +143,7 @@ class DeepQNetwork(nn.Module):
         self.fc1 = nn.Linear(*self.n2, self.fc1_dims)
         self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
         self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
+        self.dropout = nn.Dropout(p=0.3)
 
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
@@ -151,6 +152,7 @@ class DeepQNetwork(nn.Module):
 
     def forward(self, state):
         x = F.relu(self.fc1(state.float()))
+        x = self.dropout(x)
         x = F.relu(self.fc2(x))
         actions = self.fc3(x)
 
@@ -200,7 +202,7 @@ class ReplayBuffer(object):
 class Agent(object):
 
     def __init__(self, gamma, epsilon, lr, n2, batch_size, n_actions,
-                 max_mem_size=40000, eps_end=0.01, eps_dec=0.00001):
+                 max_mem_size=40000, eps_end=0.01, eps_dec=0.0001):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
