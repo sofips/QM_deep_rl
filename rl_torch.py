@@ -207,9 +207,9 @@ class Agent(object):
         self.Q_eval = DeepQNetwork(lr, 
                                    nh=2*nh,
                                    fc1_dims=120, fc2_dims=120, n_actions=n_actions)
-        self.state_memory = np.zeros((self.mem_size, *nh),
+        self.state_memory = np.zeros((self.mem_size, *(2*nh)),
                                      dtype=np.float32)
-        self.new_state_memory = np.zeros((self.mem_size, *nh),
+        self.new_state_memory = np.zeros((self.mem_size, *(2*nh)),
                                          dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
