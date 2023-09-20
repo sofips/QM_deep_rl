@@ -312,11 +312,11 @@ if __name__ == '__main__':
             indt += 1
             t = indt*dt
             action = agent.choose_action(obs_state)
-            obs_state, obs_cstate, reward, done, info = env.step(action)
+            obs_state_, obs_cstate_, reward, done, info = env.step(action)
             score += np.real(reward)
-            agent.store_transition(observation, action, reward, 
-                                    obs_state, done)
-            observation = obs_state
+            agent.store_transition(obs_state, action, reward, 
+                                    obs_state_, done)
+            obs_state = obs_state_
             
             if (indt % 32 == 0):
                 agent.learn()
