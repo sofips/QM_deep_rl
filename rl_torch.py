@@ -17,8 +17,8 @@ class MyEnv(Env):
     def __init__(self, nh):  # esto inicializa el ambiente
 
         self.action_space = Discrete(16)  # 16 acciones posibles
-        self.observation_space = Box(low=np.zeros(2*nh, dtype=np.complex_),
-                                     high=np.ones(2*nh, dtype=np.complex_))
+        self.observation_space = Box(low=np.zeros(2*nh),
+                                     high=np.ones(2*nh))
         self.n = nh
         # valor del campo magnetico
         self.bm = 100
@@ -77,15 +77,23 @@ class MyEnv(Env):
         if check_prop:
              print('Propagacion de autoestados: correcta')
 
-        c0 = np.zeros(nh, dtype=np.complex_)
-        c0[0] = 1.
+        self.cstate = np.zeros(nh, dtype=np.complex_)
+        self.cstate[0] = 1
+        self.state = np.zeros(2*nh, dtype=np.complex_)
+        self.state[0] = 1
 
     def step(self, action):
 
         self.t = self.t + self.dt
-        self.state = np.matmul(self.propagadores[action, :, :], self.state)
+        self.cstate = np.matmul(self.propagadores[action, :, :], self.cstate)
 
-        fid = np.real(self.state[nh-1]*np.conjugate(self.state[nh-1]))
+        for i in np.arange(0,nh):
+            self.state[i] = np.real(self.cstate[i]) 
+            self.state[i+1] = np.imag(self.cstate[i]) 
+
+
+        fid = np.real(self.cstate[nh-1]*np.conjugate(self.cstate[nh-1]))
+
         if (fid <= 0.8):
             reward = 10*fid
         elif (0.8 <= fid <= 1 - self.tol):
@@ -98,20 +106,21 @@ class MyEnv(Env):
         else:
             done = False
 
-        if abs(la.norm(self.state) - 1.)>1E8:
-            print('FALLO EN LA NORMALIZACION',la.norm(self.state))
+        if abs(la.norm(self.cstate) - 1.)>1E8:
+            print('FALLO EN LA NORMALIZACION',la.norm(self.cstate))
 
         info = {}
 
-        return self.state, reward, done, info
+        return self.state, self.cstate, reward, done, info
 
     def reset(self):  # se resetean el tiempo y el estado
 
-        c0 = np.zeros(self.n)
-        c0[0] = 1.
-        self.state = c0
-        self.t = 0.
-        return self.state
+        self.cstate = np.zeros(nh, dtype=np.complex_)
+        self.cstate[0] = 1
+        self.state = np.zeros(2*nh, dtype=np.complex_)
+        self.state[0] = 1
+
+        return self.state, self.cstate
 
 
 class ReplayBuffer(object):
@@ -268,20 +277,19 @@ if __name__ == '__main__':
     env = MyEnv(nh)
     states = env.observation_space.shape
     actions = env.action_space.n
+    dt = env.dt
 
     lr = 0.01
     n_games = 50000
-  
     agent =  Agent(gamma=0.95, epsilon=1.0, batch_size=32, n_actions=16, eps_end=0.01,
                   nh=[nh], lr=lr)
 
     scores = []
     fids = []
     tmaxs = []
-
     eps_history = []
 
-    dt = 0.15
+    
     f1 = open(sys.argv[1], "w")
     writer = csv.writer(f1)
     
@@ -289,7 +297,7 @@ if __name__ == '__main__':
 
         done = False
         score = 0
-        observation = env.reset()
+        state,cstate = env.reset()
         fid0 = 0.
         t = 0.
         indt = 0
@@ -304,16 +312,16 @@ if __name__ == '__main__':
             indt += 1
             t = indt*dt
             action = agent.choose_action(observation)
-            observation_, reward, done, info = env.step(action)
+            obs_state, obs_cstate, reward, done, info = env.step(action)
             score += np.real(reward)
             agent.store_transition(observation, action, reward, 
-                                    observation_, done)
-            observation = observation_
+                                    obs_state, done)
+            observation = obs_state
             
             if (indt % 32 == 0):
                 agent.learn()
 
-            fid = np.real(observation[nh-1]*np.conjugate(observation[nh-1]))
+            fid = np.real(obs_cstate[nh-1]*np.conjugate(obs_cstate[nh-1]))
 
             if (fid > fid0):
                 fid0 = np.real(fid)
