@@ -200,7 +200,7 @@ class ReplayBuffer(object):
 class Agent(object):
 
     def __init__(self, gamma, epsilon, lr, n2, batch_size, n_actions,
-                 max_mem_size=40000, eps_end=0.01, eps_dec=0.0001):
+                 max_mem_size=40000, eps_end=0.01, eps_dec=0.00001):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
