@@ -77,19 +77,25 @@ class MyEnv(Env):
         if check_prop:
              print('Propagacion de autoestados: correcta')
 
-        self.cstate = np.zeros(nh, dtype=np.complex_)
-        self.cstate[0] = 1
-        self.state = np.zeros(2*nh, dtype=np.float_)
-        self.state[0] = 1
+        #self.cstate = np.zeros(nh, dtype=np.complex_)
+       # self.cstate[0] = 1
+        #self.state = np.zeros(2*nh, dtype=np.float_)
+        #self.state[0] = 1
 
     def step(self, action):
 
         self.t = self.t + self.dt
+        
+        j = 0
+        for i in np.arange(0,nh):
+            self.cstate[i] = complex(self.state[j],self.state[j+1])
+            j+=2
+
         self.cstate = np.matmul(self.propagadores[action, :, :], self.cstate)
 
-        for i in np.arange(0,nh):
-            self.state[i] = np.real(self.cstate[i]) 
-            self.state[i+1] = np.imag(self.cstate[i]) 
+        for i in np.arange(0,2*nh,2):
+            self.state[i] = np.real(self.cstate[i//2]) 
+            self.state[i+1] = np.imag(self.cstate[i//2]) 
 
 
         fid = np.real(self.cstate[nh-1]*np.conjugate(self.cstate[nh-1]))
@@ -119,6 +125,7 @@ class MyEnv(Env):
         self.cstate[0] = 1
         self.state = np.zeros(2*nh, dtype=np.float_)
         self.state[0] = 1
+        self.t = 0.
 
         return self.state, self.cstate
 
@@ -126,14 +133,14 @@ class MyEnv(Env):
 
 
 class DeepQNetwork(nn.Module):
-    def __init__(self, lr, nh, fc1_dims, fc2_dims,
+    def __init__(self, lr, n2, fc1_dims, fc2_dims,
                  n_actions):
         super(DeepQNetwork, self).__init__()
-        self.nh = 2*nh
+        self.n2 = n2
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.n_actions = n_actions
-        self.fc1 = nn.Linear(*self.nh, self.fc1_dims)
+        self.fc1 = nn.Linear(*self.n2, self.fc1_dims)
         self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
         self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
 
@@ -148,10 +155,51 @@ class DeepQNetwork(nn.Module):
         actions = self.fc3(x)
 
         return actions
+    
+
+class ReplayBuffer(object):
+    def __init__(self, max_size, input_shape, n_actions, discrete=False):
+        self.mem_size = max_size
+        self.mem_cntr = 0
+        self.discrete = discrete
+        self.state_memory = np.zeros((self.mem_size, input_shape))
+        self.new_state_memory = np.zeros((self.mem_size, input_shape))
+        dtype = np.int8 if self.discrete else np.float32
+        self.action_memory = np.zeros((self.mem_size, n_actions), dtype=dtype)
+        self.reward_memory = np.zeros(self.mem_size)
+        self.terminal_memory = np.zeros(self.mem_size, dtype=np.float32)
+
+    def store_transition(self, state, action, reward, state_, done):
+        index = self.mem_cntr % self.mem_size
+        self.state_memory[index] = state
+        self.new_state_memory[index] = state_
+        # store one hot encoding of actions, if appropriate
+        if self.discrete:
+            actions = np.zeros(self.action_memory.shape[1])
+            actions[action] = 1.0
+            self.action_memory[index] = actions
+        else:
+            self.action_memory[index] = action
+        self.reward_memory[index] = reward
+        self.terminal_memory[index] = 1 - done
+        self.mem_cntr += 1
+
+    def sample_buffer(self, batch_size):
+        max_mem = min(self.mem_cntr, self.mem_size)
+        batch = np.random.choice(max_mem, batch_size)
+
+        states = self.state_memory[batch]
+        actions = self.action_memory[batch]
+        rewards = self.reward_memory[batch]
+        states_ = self.new_state_memory[batch]
+        terminal = self.terminal_memory[batch]
+
+        return states, actions, rewards, states_, terminal
+
 
 class Agent(object):
 
-    def __init__(self, gamma, epsilon, lr, nh, batch_size, n_actions,
+    def __init__(self, gamma, epsilon, lr, n2, batch_size, n_actions,
                  max_mem_size=40000, eps_end=0.01, eps_dec=0.0001):
         self.gamma = gamma
         self.epsilon = epsilon
@@ -166,9 +214,9 @@ class Agent(object):
         self.replace_target = 200
 
         self.Q_eval = DeepQNetwork(lr, 
-                                   nh=nh,
+                                   n2=n2,
                                    fc1_dims=120, fc2_dims=120, n_actions=n_actions)
-        n2 = 2*nh
+      
         self.state_memory = np.zeros((self.mem_size, *n2),
                                      dtype=np.float32)
         self.new_state_memory = np.zeros((self.mem_size, *n2),
@@ -179,7 +227,6 @@ class Agent(object):
 
     def store_transition(self, state, action, reward, state_, terminal):
         index = self.mem_cntr % self.mem_size
-        print(state)
         self.state_memory[index] = state
         self.new_state_memory[index] = state_
         self.reward_memory[index] = reward
@@ -238,14 +285,12 @@ if __name__ == '__main__':
 
     nh = 7
     env = MyEnv(nh)
-    states = env.observation_space.shape
-    actions = env.action_space.n
     dt = env.dt
 
     lr = 0.01
-    n_games = 50000
+    n_games = 1000
     agent =  Agent(gamma=0.95, epsilon=1.0, batch_size=32, n_actions=16, eps_end=0.01,
-                  nh=[nh], lr=lr)
+                  n2=[2*nh], lr=lr)
 
     scores = []
     fids = []
@@ -280,11 +325,13 @@ if __name__ == '__main__':
             agent.store_transition(obs_state, action, reward, 
                                     obs_state_, done)
             obs_state = obs_state_
+            obs_cstate = obs_cstate_
+
             
             if (indt % 32 == 0):
                 agent.learn()
 
-            fid = np.real(obs_cstate[nh-1]*np.conjugate(obs_cstate[nh-1]))
+            fid = np.real(obs_cstate_[nh-1]*np.conjugate(obs_cstate_[nh-1]))
 
             if (fid > fid0):
                 fid0 = np.real(fid)
