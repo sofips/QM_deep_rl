@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
         done = False
         score = 0
-        state,cstate = env.reset()
+        obs_state,obs_cstate = env.reset()
         fid0 = 0.
         t = 0.
         indt = 0
