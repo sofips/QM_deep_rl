@@ -79,7 +79,7 @@ class MyEnv(Env):
 
         self.cstate = np.zeros(nh, dtype=np.complex_)
         self.cstate[0] = 1
-        self.state = np.zeros(2*nh, dtype=np.complex_)
+        self.state = np.zeros(2*nh, dtype=np.float_)
         self.state[0] = 1
 
     def step(self, action):
@@ -117,7 +117,7 @@ class MyEnv(Env):
 
         self.cstate = np.zeros(nh, dtype=np.complex_)
         self.cstate[0] = 1
-        self.state = np.zeros(2*nh, dtype=np.complex_)
+        self.state = np.zeros(2*nh, dtype=np.float_)
         self.state[0] = 1
 
         return self.state, self.cstate
@@ -172,7 +172,7 @@ class DeepQNetwork(nn.Module):
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.n_actions = n_actions
-        self.fc1 = nn.Linear(*self.nh, self.fc1_dims, dtype= np.complex_)
+        self.fc1 = nn.Linear(*self.nh, self.fc1_dims)
         self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
         self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
 
