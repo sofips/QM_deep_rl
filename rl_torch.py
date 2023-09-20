@@ -168,7 +168,7 @@ class DeepQNetwork(nn.Module):
     def __init__(self, lr, nh, fc1_dims, fc2_dims,
                  n_actions):
         super(DeepQNetwork, self).__init__()
-        self.nh = nh
+        self.nh = 2*nh
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.n_actions = n_actions
@@ -205,10 +205,10 @@ class Agent(object):
         self.replace_target = 200
 
         self.Q_eval = DeepQNetwork(lr, 
-                                   nh=nh,
+                                   nh=2*nh,
                                    fc1_dims=120, fc2_dims=120, n_actions=n_actions)
         self.state_memory = np.zeros((self.mem_size, *nh),
-                                     dtype=np.complex_)
+                                     dtype=np.float32)
         self.new_state_memory = np.zeros((self.mem_size, *nh),
                                          dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
