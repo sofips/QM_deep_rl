@@ -311,7 +311,7 @@ if __name__ == '__main__':
         while not done:
             indt += 1
             t = indt*dt
-            action = agent.choose_action(observation)
+            action = agent.choose_action(obs_state)
             obs_state, obs_cstate, reward, done, info = env.step(action)
             score += np.real(reward)
             agent.store_transition(observation, action, reward, 
