@@ -154,6 +154,7 @@ class DeepQNetwork(nn.Module):
         x = F.relu(self.fc1(state.float()))
         x = self.dropout(x)
         x = F.relu(self.fc2(x))
+        x = self.dropout(x)
         actions = self.fc3(x)
 
         return actions
