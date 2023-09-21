@@ -98,7 +98,7 @@ class MyEnv(Env):
         else:
             done = False
 
-        if abs(la.norm(self.state) - 1.)>1E8:
+        if abs(la.norm(self.state) - 1.)>1E-8:
             print('FALLO EN LA NORMALIZACION',la.norm(self.state))
 
         info = {}
