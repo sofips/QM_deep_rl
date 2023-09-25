@@ -303,6 +303,7 @@ if __name__ == '__main__':
     
     f1 = open(sys.argv[1], "w")
     writer = csv.writer(f1)
+    indt = 0
     
     for i in range(n_games):
 
@@ -311,7 +312,6 @@ if __name__ == '__main__':
         obs_state,obs_cstate = env.reset()
         fid0 = 0.
         t = 0.
-        indt = 0
         tfmax = 0.
 
         #if (i % 1000 == 0):
@@ -331,7 +331,7 @@ if __name__ == '__main__':
             obs_cstate = obs_cstate_
 
             
-            if (indt % 32 == 0):
+            if (indt > 500 and indt % 5 == 0):
                 agent.learn()
 
             fid = np.real(obs_cstate_[nh-1]*np.conjugate(obs_cstate_[nh-1]))
