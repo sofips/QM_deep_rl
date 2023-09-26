@@ -54,7 +54,6 @@ def diagonales(bmax, i, nh):
 
     elif (i == 9):
 
-        b = np.full(nh, -1)
         b[nh-2] = 1
 
     elif (i == 10):
