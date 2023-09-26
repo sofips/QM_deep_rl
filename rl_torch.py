@@ -32,7 +32,7 @@ class MyEnv(Env):
         self.t = 0.                          # inicializo el tiempo en 0
         self.dt = 0.15                      # intervalos de tiempo
         self.tol = 0.05                      # tolerancia
-        self.tmax = 32                      # tiempo maximo
+        self.tmax = 28                      # tiempo maximo
 
 
         for j in range(0, 16): # para cada matriz de accion
@@ -286,7 +286,7 @@ class Agent(object):
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    nh = 7
+    nh = 6
     env = MyEnv(nh)
     dt = env.dt
 
