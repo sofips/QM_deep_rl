@@ -192,7 +192,7 @@ class MyEnv(Env):
         if check_prop:
              print('Propagacion de autoestados: correcta')
 
-    def exec(self, actionnum, environment):
+    def step(self, actionnum):
         
         self.stp +=1
         
@@ -276,10 +276,8 @@ class MyEnv(Env):
         #print('Despues: ', (self.state), fid)
         estado = self.old_state
         
-        if environment == 'sp':
-            return estado, old_reward, done, old_fid
-        else:
-            return self.state, reward, done, fid
+   
+        return estado, old_reward, done, old_fid
 
     def reset(self):  # se resetean el tiempo y el estado
         

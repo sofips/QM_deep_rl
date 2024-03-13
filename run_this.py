@@ -28,7 +28,7 @@ def run_state():
     writer = csv.writer(f1, delimiter= ' ')
     indt = 0
 
-    for episode in range(5000):
+    for episode in range(50000):
         observation = env.reset()
         observation_ = env.reset()
         newaction = []
@@ -41,8 +41,8 @@ def run_state():
             newaction.append(action)
             # observation_:new action; done:break the episode or not
             #print('obs',observation,'obs_',observation_)
-            observation = observation_ #observation_.copy()
-            observation_, reward, done, fidelity = env.exec(action,enviroment)
+            observation =  observation_.copy()
+            observation_, reward, done, fidelity = env.step(action)
             #print('obs post step',observation,'obs_ post step',observation_)
 
             #print(observation_, reward, done, fidelity)
@@ -95,11 +95,11 @@ def run_state():
 if __name__ == "__main__":
 
     enviroment = sys.argv[1]
-    env = MyEnv()
-    #if enviroment == 'sp':
-        #env = MyEnv()
-    #else:
-        #env = State()
+    #env = MyEnv()
+    if enviroment == 'sp':
+        env = MyEnv()
+    else:
+        env = State()
 
     RL = DQNPrioritizedReplay(env.n_actions, env.n_features,  # updated network, it change the way of learning
                               learning_rate=0.01,
