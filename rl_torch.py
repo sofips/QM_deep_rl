@@ -17,8 +17,8 @@ class MyEnv(Env):
     def __init__(self, nh):  # esto inicializa el ambiente
 
         self.action_space = Discrete(16)  # 16 acciones posibles
-        self.observation_space = Box(low=np.zeros(nh, dtype=np.complex_),
-                                     high=np.ones(nh, dtype=np.complex_))
+        self.observation_space = Box(low=np.zeros(2*nh),
+                                     high=np.ones(2*nh))
         self.n = nh
         # valor del campo magnetico
         self.bm = 100
@@ -32,7 +32,7 @@ class MyEnv(Env):
         self.t = 0.                          # inicializo el tiempo en 0
         self.dt = 0.15                      # intervalos de tiempo
         self.tol = 0.05                      # tolerancia
-        self.tmax = 32                      # tiempo maximo
+        self.tmax = 28                      # tiempo maximo
 
 
         for j in range(0, 16): # para cada matriz de accion
@@ -77,15 +77,29 @@ class MyEnv(Env):
         if check_prop:
              print('Propagacion de autoestados: correcta')
 
-        c0 = np.zeros(nh, dtype=np.complex_)
-        c0[0] = 1.
+        #self.cstate = np.zeros(nh, dtype=np.complex_)
+       # self.cstate[0] = 1
+        #self.state = np.zeros(2*nh, dtype=np.float_)
+        #self.state[0] = 1
 
     def step(self, action):
 
         self.t = self.t + self.dt
-        self.state = np.matmul(self.propagadores[action, :, :], self.state)
+        
+        j = 0
+        for i in np.arange(0,nh):
+            self.cstate[i] = complex(self.state[j],self.state[j+1])
+            j+=2
 
-        fid = np.real(self.state[nh-1]*np.conjugate(self.state[nh-1]))
+        self.cstate = np.matmul(self.propagadores[action, :, :], self.cstate)
+        
+        for i in np.arange(0,2*nh,2):
+            self.state[i] = np.real(self.cstate[i//2]) 
+            self.state[i+1] = np.imag(self.cstate[i//2]) 
+
+
+        fid = np.real(self.cstate[nh-1]*np.conjugate(self.cstate[nh-1]))
+
         if (fid <= 0.8):
             reward = 10*fid
         elif (0.8 <= fid <= 1 - self.tol):
@@ -98,21 +112,53 @@ class MyEnv(Env):
         else:
             done = False
 
-        if abs(la.norm(self.state) - 1.)>1E-8:
-            print('FALLO EN LA NORMALIZACION',la.norm(self.state))
+        if abs(la.norm(self.cstate) - 1.)>1E-8:
+            print('FALLO EN LA NORMALIZACION',la.norm(self.cstate))
 
         info = {}
 
-        return self.state, reward, done, info
+        return self.state, self.cstate, reward, done, info
 
     def reset(self):  # se resetean el tiempo y el estado
 
-        c0 = np.zeros(self.n)
-        c0[0] = 1.
-        self.state = c0
+        self.cstate = np.zeros(nh, dtype=np.complex_)
+        self.cstate[0] = 1
+        self.state = np.zeros(2*nh, dtype=np.float_)
+        self.state[0] = 1
         self.t = 0.
-        return self.state
 
+        return self.state, self.cstate
+
+
+
+
+class DeepQNetwork(nn.Module):
+    def __init__(self, lr, n2, fc1_dims, fc2_dims,
+                 n_actions):
+        super(DeepQNetwork, self).__init__()
+        self.n2 = n2
+        self.fc1_dims = fc1_dims
+        self.fc2_dims = fc2_dims
+        self.n_actions = n_actions
+        self.fc1 = nn.Linear(*self.n2, self.fc1_dims)
+        self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
+        self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
+        self.dropout = nn.Dropout(p=0.3)
+
+        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.loss = nn.MSELoss()
+        self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
+        self.to(self.device)
+
+    def forward(self, state):
+        x = F.relu(self.fc1(state.float()))
+        x = self.dropout(x)
+        x = F.relu(self.fc2(x))
+        x = self.dropout(x)
+        actions = self.fc3(x)
+
+        return actions
+    
 
 class ReplayBuffer(object):
     def __init__(self, max_size, input_shape, n_actions, discrete=False):
@@ -154,34 +200,9 @@ class ReplayBuffer(object):
         return states, actions, rewards, states_, terminal
 
 
-
-class DeepQNetwork(nn.Module):
-    def __init__(self, lr, nh, fc1_dims, fc2_dims,
-                 n_actions):
-        super(DeepQNetwork, self).__init__()
-        self.nh = nh
-        self.fc1_dims = fc1_dims
-        self.fc2_dims = fc2_dims
-        self.n_actions = n_actions
-        self.fc1 = nn.Linear(*self.nh, self.fc1_dims)
-        self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
-        self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
-
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
-        self.loss = nn.MSELoss()
-        self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
-        self.to(self.device)
-
-    def forward(self, state):
-        x = F.relu(self.fc1(state.float()))
-        x = F.relu(self.fc2(x))
-        actions = self.fc3(x)
-
-        return actions
-
 class Agent(object):
 
-    def __init__(self, gamma, epsilon, lr, nh, batch_size, n_actions,
+    def __init__(self, gamma, epsilon, lr, n2, batch_size, n_actions,
                  max_mem_size=40000, eps_end=0.01, eps_dec=0.0001):
         self.gamma = gamma
         self.epsilon = epsilon
@@ -196,11 +217,12 @@ class Agent(object):
         self.replace_target = 200
 
         self.Q_eval = DeepQNetwork(lr, 
-                                   nh=nh,
+                                   n2=n2,
                                    fc1_dims=120, fc2_dims=120, n_actions=n_actions)
-        self.state_memory = np.zeros((self.mem_size, *nh),
+      
+        self.state_memory = np.zeros((self.mem_size, *n2),
                                      dtype=np.float32)
-        self.new_state_memory = np.zeros((self.mem_size, *nh),
+        self.new_state_memory = np.zeros((self.mem_size, *n2),
                                          dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
@@ -264,35 +286,32 @@ class Agent(object):
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    nh = 7
+    nh = 6
     env = MyEnv(nh)
-    states = env.observation_space.shape
-    actions = env.action_space.n
+    dt = env.dt
 
     lr = 0.01
     n_games = 50000
-  
     agent =  Agent(gamma=0.95, epsilon=1.0, batch_size=32, n_actions=16, eps_end=0.01,
-                  nh=[nh], lr=lr)
+                  n2=[2*nh], lr=lr)
 
     scores = []
     fids = []
     tmaxs = []
-
     eps_history = []
 
-    dt = 0.15
+    
     f1 = open(sys.argv[1], "w")
     writer = csv.writer(f1)
+    indt = 0
     
     for i in range(n_games):
 
         done = False
         score = 0
-        observation = env.reset()
+        obs_state,obs_cstate = env.reset()
         fid0 = 0.
         t = 0.
-        indt = 0
         tfmax = 0.
 
         #if (i % 1000 == 0):
@@ -303,17 +322,19 @@ if __name__ == '__main__':
         while not done:
             indt += 1
             t = indt*dt
-            action = agent.choose_action(observation)
-            observation_, reward, done, info = env.step(action)
+            action = agent.choose_action(obs_state)
+            obs_state_, obs_cstate_, reward, done, info = env.step(action)
             score += np.real(reward)
-            agent.store_transition(observation, action, reward, 
-                                    observation_, done)
-            observation = observation_
+            agent.store_transition(obs_state, action, reward, 
+                                    obs_state_, done)
+            obs_state = obs_state_
+            obs_cstate = obs_cstate_
+
             
-            if (indt % 32 == 0):
+            if (indt > 500 and indt % 5 == 0):
                 agent.learn()
 
-            fid = np.real(observation[nh-1]*np.conjugate(observation[nh-1]))
+            fid = np.real(obs_cstate_[nh-1]*np.conjugate(obs_cstate_[nh-1]))
 
             if (fid > fid0):
                 fid0 = np.real(fid)
