@@ -8,7 +8,7 @@ code uses Deep Reinforcement Learning to obtain an optimal sequence of magnetic 
 
 We consider an homogeneous XX hamiltonian describing a quantum spin chain that can be under the influence of magnetic pulses in discrete periods of time:
 
-$H( t)  = -\sum_{i=1}^{N-1} J\left( \sigma_{i}^{x} \sigma_{i+1}^{x} +\sigma_{i}^{y} \sigma_{i+1}^{y}\right) +\sum_{i=1}^{N} B_{k}(t) \sigma _{k}^{z}$
+$H( t)  = -\sum\limits_{i=1}^{N-1} J\left( \sigma_{i}^{x} \sigma_{i+1}^{x} +\sigma_{i}^{y} \sigma_{i+1}^{y}\right) +\sum\limits_{i=1}^{N} B_{k}(t) \sigma _{k}^{z}$
 
 Following the work of Zhang et. al, consider 16 possible combinations of pulses that can be applied to the extremes of the chain. 
 
