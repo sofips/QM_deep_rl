@@ -64,7 +64,7 @@ eps_history = []
 
 writer = csv.writer(f1, delimiter=" ")
 action_writer = csv.writer(f2, delimiter=" ")
-
+stp = 0
 for i in range(number_of_episodes):
 
     done = False
@@ -79,7 +79,6 @@ for i in range(number_of_episodes):
     action_sequence = []
 
     while not done:
-
         action = agent.choose_action(obs_state)
         obs_state_, obs_cstate_, t_step, fidelity, reward, done = env.step(action)
         score += np.real(reward)
@@ -89,12 +88,15 @@ for i in range(number_of_episodes):
 
         action_sequence.append(action)
 
-        if i > 1000 and t_step % 5 == 0:
+        if stp > 500 and stp % 5 == 0:
             agent.learn()
 
         if fidelity > fid_max:
             fid_max = np.real(fidelity)
             t_fid_max = t_step
+    
+        stp += 1
+
 
     eps_history.append(agent.epsilon)
     scores.append(score)
