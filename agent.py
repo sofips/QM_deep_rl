@@ -97,7 +97,7 @@ class DeepQNetwork(nn.Module):
             if isinstance(m, nn.Linear):
                 nn.init.normal_(m.weight, mean=0.0, std=0.3)
                 if m.bias is not None:
-                    nn.init.constant_(m.bias, 0.0)
+                    nn.init.constant_(m.bias, 0.1)
 
 
 class Agent(object):
@@ -233,12 +233,14 @@ class Agent(object):
         
         if self.mem_cntr < self.batch_size:
             return
+        if self.iter_cntr % self.replace_target == 0:
+            self.update_target_network()
 
         self.Q_eval.optimizer.zero_grad()
 
         max_mem = min(self.mem_cntr, self.mem_size)
 
-        batch = np.random.choice(max_mem, self.batch_size, replace=False)
+        batch = np.random.choice(max_mem, self.batch_size, replace=True)
         batch_index = np.arange(self.batch_size, dtype=np.int32)
 
         state_batch = T.tensor(self.state_memory[batch]).to(self.Q_eval.device)
@@ -247,11 +249,12 @@ class Agent(object):
         reward_batch = T.tensor(self.reward_memory[batch]).to(self.Q_eval.device)
         terminal_batch = T.tensor(self.terminal_memory[batch]).to(self.Q_eval.device)
 
+    
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_next = self.Q_target.forward(new_state_batch)
         q_next[terminal_batch] = 0.0
-
-        q_target = reward_batch + self.gamma * T.max(q_next, dim=1)[0]
+        q_target = q_eval.clone()
+        q_target[batch_index] = reward_batch + self.gamma * T.max(q_next, dim=1)[0]
 
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
@@ -260,8 +263,7 @@ class Agent(object):
 
         self.iter_cntr += 1
 
-        if self.iter_cntr % self.replace_target == 0:
-            self.update_target_network()
+
 
         self.epsilon = (
             self.epsilon - self.eps_dec if self.epsilon > self.eps_min else self.eps_min
