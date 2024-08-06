@@ -16,7 +16,7 @@ config = configparser.ConfigParser()
 chain_length = 10
 tstep_length = 0.15                       
 tolerance = 0.05                     
-max_t_steps = 50                     
+max_t_steps = 50                    
 field_strength = 100
 coupling = 1
 n_actions = 16
@@ -29,7 +29,7 @@ number_of_features = 2*chain_length
 number_of_episodes = 50000
 step_learning_interval = 5
 
-learning_rate = 0.01
+learning_rate = 0.001
 gamma = 0.95
 
 # memory
@@ -44,8 +44,8 @@ epsilon_minimum = 0.01
 
 # dqn
 fc1_dims = 50
-fc2_dims = 50
-dropout = 0.
+fc2_dims = fc1_dims//3
+dropout = 0.05
 
 #---------------------------------------------------
 
