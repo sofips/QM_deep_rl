@@ -165,7 +165,7 @@ class MyEnv(Env):
         
         # check state normalization
         if abs(la.norm(self.cstate) - 1.0) > 1e-8:
-            raise ValueError(f"""State not normalized. 
+            raise Exception(f"""State not normalized. 
                              Norm: {la.norm(self.cstate)}""")
 
         return self.state, self.cstate, self.t_step, fid, reward, done
@@ -218,9 +218,10 @@ def check_sd(n, n_actions, actions, sd):
                 if actions[k, i, j] - sd[k, i, j] > 1e-8:
                     print("error in spectral decomposition")
                     check_sd = False
+                    raise Exception("Error in spectral decomposition")
 
     if check_sd:
-        print("Spectral Decomposition: checked")
+        print("Correct Spectral Decomposition")
 
     return check_sd
 
@@ -255,8 +256,8 @@ def propagators_check(n, n_actions, dt, propagators, bases, energies):
             )
             et = np.sum(errores)
             if la.norm(et) > 1e-8:
-                print("error en propagacion")
                 check_prop = False
+                raise Exception("Error in state propagation")
 
     if check_prop:
         print("State Propagation: checked")
