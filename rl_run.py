@@ -68,7 +68,6 @@ if new_experiment:
     experiment = client.create_experiment(name=experiment_name, tags=experiment_tags)
 
 experiment = mlflow.get_experiment_by_name(experiment_name)
-mlflow.set_experiment(experiment_name)
 
 # initialize environment and agent
 env = MyEnv(config_file)
@@ -88,6 +87,8 @@ action_writer = csv.writer(f2, delimiter=" ")
 
 stp = 0
 number_of_episodes = config.getint("learning_parameters", "number_of_episodes")
+mlflow.set_tracking_uri(uri=tracking_uri)
+mlflow.set_experiment(experiment_name)
 
 with mlflow.start_run(run_name=run_name,nested=False):
     mlflow.log_params(system_parameters)
