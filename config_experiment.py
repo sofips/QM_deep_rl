@@ -25,20 +25,19 @@ run = True if run == "y" else False if run == "n" else sys.exit("Error: y o n")
 #                         SYSTEM PARAMETERS                       #
 # -----------------------------------------------------------------#
 
-chain_length = 10
+chain_length = 7
 tstep_length = 0.15
 tolerance = 0.05
-max_t_steps = 50
+max_t_steps = chain_length*5
 field_strength = 100
 coupling = 1
-n_actions = 16
 
 # -----------------------------------------------------------------#
 #                    LEARNING HYPERPARAMETERS                     #
 # -----------------------------------------------------------------#
 
 number_of_features = 2 * chain_length
-number_of_episodes = 50000
+number_of_episodes = 1000
 step_learning_interval = 5
 
 learning_rate = 0.001
