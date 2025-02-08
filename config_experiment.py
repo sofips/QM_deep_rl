@@ -8,6 +8,19 @@ import sys
 cname = sys.argv[1]
 config = configparser.ConfigParser()
 
+experiment_description = (
+    """ Experiment to test the performance of a reinforcement learning 
+        agent using pytorch.
+    """
+)
+
+new_experiment = input("New experiment? (y/n): ")
+new_experiment = True if new_experiment == "y" else False if new_experiment == "n" else sys.exit("Error: y o n")
+experiment_name = input("Experiment name/name: ")
+run = input("Run experiment (y/n): ")
+run = True if run == "y" else False if run == "n" else sys.exit("Error: y o n")
+
+
 # -----------------------------------------------------------------#
 #                         SYSTEM PARAMETERS                       #
 # -----------------------------------------------------------------#
@@ -56,6 +69,9 @@ n_actions = (
 )
 
 # ---------------------------------------------------
+config["experiment"] = {"new_experiment": str(new_experiment),
+                        "experiment_name": experiment_name,}
+
 
 config["system_parameters"] = {
     "chain_length": str(chain_length),
@@ -85,6 +101,12 @@ config["learning_parameters"] = {
     "reward_function": reward_function,
 }
 
+config["tags"] = {
+    "reward_function": reward_function,
+    "mlflow.note.content": experiment_description,
+    "action set": action_set,
+    "chain_length": str(chain_length),
+}
 # ---------------------------------------------------
 
 config_name = cname + ".ini"
