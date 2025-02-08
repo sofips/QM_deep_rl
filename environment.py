@@ -4,11 +4,10 @@ Definition of actions, environment class and tests for physical properties
 
 import configparser
 import numpy as np
-from scipy.linalg import expm, norm
+from scipy.linalg import expm
 import scipy.linalg as la
 from gym import Env
 from gym.spaces import Discrete, Box
-import cmath as cm
 
 # constant i
 comp_i = complex(0, 1)
@@ -54,18 +53,22 @@ class MyEnv(Env):
         self.tolerance = config.getfloat("system_parameters", "tolerance")
         self.max_t_steps = config.getint("system_parameters", "max_t_steps")
         self.coupling = config.getfloat("system_parameters", "coupling")
-        self.field_strength = config.getfloat("system_parameters", "field_strength")
+        self.field_strength = config.getfloat("system_parameters",
+                                              "field_strength")
         self.n_actions = config.getint("system_parameters", "n_actions")
 
         # --------------------------------------------------------------------------
         # Define action and observation space (complex observations)
         # --------------------------------------------------------------------------
         self.action_space = Discrete(self.n_actions)  # 16 acciones posibles
-        self.observation_space = Box(low=np.zeros(2 * self.n), high=np.ones(2 * self.n))
+        self.observation_space = Box(low=np.zeros(2 * self.n),
+                                     high=np.ones(2 * self.n))
         # --------------------------------------------------------------------------
-        # Define matrices to store actions, and propagations (also check spect. decomp.)
+        # Define matrices to store actions, and propagations
+        # (also check spect. decomp.)
         # --------------------------------------------------------------------------
-        self.action_mat = actions(self.field_strength, self.coupling, self.n)
+        self.action_mat = actions_zhang(self.field_strength, self.coupling,
+                                        self.n)
         self.energies = np.zeros((16, self.n), dtype=np.complex_)
         self.bases = np.zeros((16, self.n, self.n), dtype=np.complex_)
         self.propagators = np.zeros((16, self.n, self.n), dtype=np.complex_)
@@ -77,18 +80,22 @@ class MyEnv(Env):
 
         for i in range(0, self.n_actions):
 
-            self.energies[i, :], self.bases[i, :, :] = la.eig(self.action_mat[i, :, :])
-            self.propagators[i, :, :] = expm(-1j * self.action_mat[i] * self.dt)
+            self.energies[i, :], self.bases[i, :, :] = la.eig(
+                self.action_mat[i, :, :])
+            self.propagators[i, :, :] = expm(-1j * self.action_mat[i] *
+                                             self.dt)
 
             for k in range(0, self.n):
                 p = np.outer(self.bases[i, :, k], self.bases[i, :, k])
-                self.sp_desc[i, :, :] = self.sp_desc[i, :, :] + p * self.energies[i, k]
+                self.sp_desc[i, :, :] = self.sp_desc[i, :, :] + p * \
+                    self.energies[i, k]
 
         # Spectral Decomposition Check
         check_sd(self.n, self.n_actions, self.action_mat, self.sp_desc)
         # Correct Propagation Check
         propagators_check(
-            self.n, self.n_actions, self.dt, self.propagators, self.bases, self.energies
+            self.n, self.n_actions, self.dt, self.propagators, self.bases,
+            self.energies
         )
 
         # Set time to 0 and states to one excitation
@@ -129,7 +136,8 @@ class MyEnv(Env):
             self.state[i] = np.real(self.cstate[i // 2])
             self.state[i + 1] = np.imag(self.cstate[i // 2])
 
-        fid = np.real(self.cstate[self.n - 1] * np.conjugate(self.cstate[self.n - 1]))
+        fid = np.real(self.cstate[self.n - 1] *
+                      np.conjugate(self.cstate[self.n - 1]))
 
         if fid <= 0.8:
             reward = 10 * fid
@@ -217,10 +225,12 @@ def propagators_check(n, n_actions, dt, propagators, bases, energies):
         n (int): Number of bases.
         n_actions (int): Number of actions.
         dt (float): Time step.
-        propagators (ndarray): Array of shape (n_actions, n, n) representing the propagators
-        associated to each action
-        bases (ndarray): Array of shape (n_actions, n, n) representing the eigenvectors.
-        energies (ndarray): Array of shape (n_actions, n) representing the energies / eigenvalues.
+        propagators (ndarray): Array of shape (n_actions, n, n) representing
+        the propagators associated to each action
+        bases (ndarray): Array of shape (n_actions, n, n)
+        representing the eigenvectors.
+        energies (ndarray): Array of shape (n_actions, n) '
+        representing the energies / eigenvalues.
 
     Returns:
         bool: True if state propagation is correct, False otherwise.
@@ -250,130 +260,64 @@ def propagators_check(n, n_actions, dt, propagators, bases, energies):
 # ----------------------------------------------------------------------#
 
 
-def diagonals(bmax, i, nh):
-    """
-    Generate diagonals associated to each action matrix.
-    See definition on the referenced work
-    (https://doi.org/10.1103/PhysRevA.97.052333)
-
-    Parameters:
-    - bmax (float): Value of the magnetic field
-    - i (int): The index corresponding to the action.
-    - nh (int): The length of the diagonal vector, corresponding
-    to the size of the system / length of the chain.
-
-    Returns:
-    - b (numpy.ndarray): The generated diagonal vector.
-
-    """
-
-    b = np.full(nh, 0)
-
-    if i == 1:
-        b[0] = 1
-
-    elif i == 2:
-        b[1] = 1
-
-    # Rest of the code...
-
-    b = bmax * b
-
-    return b
-
-
-def diagonals(bmax, i, nh):
-
-    b = np.full(nh, 0)
-
-    if i == 1:
-        b[0] = 1
-
-    elif i == 2:
-        b[1] = 1
-
-    elif i == 3:
-        b[0] = 1
-        b[1] = 1
-
-    elif i == 4:
-        b[2] = 1
-
-    elif i == 5:
-        b[0] = 1
-        b[2] = 1
-
-    elif i == 6:
-        b[1] = 1
-        b[2] = 1
-
-    elif i == 7:
-        b[0] = 1
-        b[1] = 1
-        b[2] = 1
-
-    elif i == 8:
-        b[nh - 3] = 1
-
-    elif i == 9:
-        b[nh - 2] = 1
-
-    elif i == 10:
-        b[nh - 3] = 1
-        b[nh - 2] = 1
-
-    elif i == 11:
-        b[nh - 1] = 1
-
-    elif i == 12:
-        b[nh - 3] = 1
-        b[nh - 1] = 1
-
-    elif i == 13:
-        b[nh - 2] = 1
-        b[nh - 1] = 1
-
-    elif i == 14:
-        b[nh - 3] = 1
-        b[nh - 2] = 1
-        b[nh - 1] = 1
-
-    elif i == 15:
-        b[:] = 1
-
-    else:
-        b = np.full(nh, 0.0)
-
-    b = bmax * b
-
-    return b
-
-
-def actions(bmax, J, nh):
+def actions_zhang(field_strength, coupling, chain_length):
     """
     Generate matrix of the 16 possible actions
     based on the given parameters. For full definition, check
     the referenced work:
     (https://doi.org/10.1103/PhysRevA.97.052333)
     Args:
-        bmax (int): Magnetic Field value
-        J (float): Coupling Constants
-        nh (int): Length of the chain
+        field_strength (float): Magnetic Field value
+        coupling (float): Coupling Constants
+        chain_length (int): Length of the chain
 
     Returns:
-        numpy.ndarray: A matrix of actions with shape (16, nh, nh).
+        numpy.ndarray: A matrix of actions with shape (16, chain_length,
+        chain_length).
     """
+    nc = 3  # number of control sites, nc=3,there are totally 16 actions.
 
-    mat_acc = np.zeros((16, nh, nh))
+    # defining action, each row of 'mag' corresponds to one configuration
 
-    for i in range(0, 16):
-        b = diagonals(bmax, i, nh)
+    def binact(A):  # action label
+        m = np.zeros(nc)
+        for ii in range(
+            nc
+        ):  # transfer action to a binary list, for example: action=5, x=[1, 0,
+            # 1, 0], the first and third magnetic is on
+            m[nc - 1 - ii] = A >= 2 ** (nc - 1 - ii)
+            A = A - 2 ** (nc - 1 - ii) * m[nc - 1 - ii]
+        return m
 
-        for k in range(0, nh - 1):
-            mat_acc[i, k, k + 1] = J
-            mat_acc[i, k + 1, k] = mat_acc[i, k, k + 1]
+    mag = []
+    for ii in range(8):  # control at the beginning
+        mag.append(
+            list(
+                np.concatenate(
+                    (binact(ii) * field_strength, np.zeros(chain_length - nc))
+                )
+            )
+        )
 
-        for k in range(0, nh):
-            mat_acc[i, k, k] = b[k]
+    for ii in range(1, 8):  # control at the end
+        mag.append(
+            list(
+                np.concatenate(
+                    (np.zeros(chain_length - nc), binact(ii) * field_strength)
+                )
+            )
+        )
 
-    return mat_acc
+    mag.append([field_strength for ii in range(chain_length)])
+
+    action_hamiltonians = np.zeros((16, chain_length, chain_length))
+
+    for actions in mag:
+        ham = (
+            np.diag([coupling for i in range(chain_length - 1)], 1) * (1-0j)
+            + np.diag([coupling for i in range(chain_length - 1)], -1) * (1+0j)
+            + np.diag(actions)
+        )
+        action_hamiltonians[mag.index(actions)] = ham
+
+    return action_hamiltonians
