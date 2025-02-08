@@ -27,7 +27,7 @@ config = configparser.ConfigParser()
 config.read(config_file)
 
 # create directory to save results
-directory = sys.argv[2]  
+directory = sys.argv[2]
 isExist = os.path.exists(directory)
 
 if not isExist:
@@ -37,7 +37,7 @@ else:
     exit()
 
 # save config file in created directory
-cmd = f'cp "{config_file}" "{directory}"' 
+cmd = f'cp "{config_file}" "{directory}"'
 os.system(cmd)
 
 # generate files to save results of learning and successfull actions
@@ -94,9 +94,8 @@ for i in range(number_of_episodes):
         if fidelity > fid_max:
             fid_max = np.real(fidelity)
             t_fid_max = t_step
-    
-        stp += 1
 
+        stp += 1
 
     eps_history.append(agent.epsilon)
     scores.append(score)
