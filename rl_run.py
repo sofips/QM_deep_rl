@@ -1,10 +1,9 @@
 import sys
 import numpy as np
-import scipy.linalg as la
 import csv
 import configparser
-from environment import *
-from agent import *
+from environment import MyEnv
+from agent import Agent
 import os
 
 """
@@ -13,7 +12,7 @@ al (https://doi.org/10.1103/PhysRevA.97.052333). The following
 code uses Deep Reinforcement Learning to obtain an optimal
 sequence of magnetic fields that should be applied to the
 extremes of a spin chain in order to achieve a perfect
-transmission. 
+transmission.
 
 Arguments:
  - config_file: configuration file with the parameters of the system and
@@ -80,7 +79,8 @@ for i in range(number_of_episodes):
 
     while not done:
         action = agent.choose_action(obs_state)
-        obs_state_, obs_cstate_, t_step, fidelity, reward, done = env.step(action)
+        obs_state_, obs_cstate_, t_step, fidelity, reward, done = env.step(
+            action)
         score += np.real(reward)
         agent.store_transition(obs_state, action, reward, obs_state_, done)
         obs_state = obs_state_.copy()
@@ -104,11 +104,11 @@ for i in range(number_of_episodes):
     fid_end_vector.append(fidelity)
     t_end_vector.append(t_step)
 
-    avg_score = np.mean(scores[max(0, i - 100) : (i + 1)])
-    avg_fid_max = np.mean(fid_max_vector[max(0, i - 100) : (i + 1)])
-    avg_time_fid_max = np.mean(t_fid_max_vector[max(0, i - 100) : (i + 1)])
-    avg_fid_end = np.mean(fid_end_vector[max(0, i - 100) : (i + 1)])
-    avg_time_end = np.mean(t_end_vector[max(0, i - 100) : (i + 1)])
+    avg_score = np.mean(scores[max(0, i - 100):(i + 1)])
+    avg_fid_max = np.mean(fid_max_vector[max(0, i - 100):(i + 1)])
+    avg_time_fid_max = np.mean(t_fid_max_vector[max(0, i - 100):(i + 1)])
+    avg_fid_end = np.mean(fid_end_vector[max(0, i - 100):(i + 1)])
+    avg_time_end = np.mean(t_end_vector[max(0, i - 100):(i + 1)])
 
     print(
         "episode: ",
@@ -133,7 +133,7 @@ for i in range(number_of_episodes):
     ]
     writer.writerow(row)
 
-    if fid_max > 0.95:  # -config.getfloat('system_parameters','tolerance'):
+    if fid_max > config.getfloat('system_parameters','tolerance'):
         action_sequence.append(fidelity)
         action_writer.writerow(action_sequence)
 
