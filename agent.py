@@ -1,5 +1,5 @@
 """
-Agent and network configuration 
+Agent and network configuration for reinforcement learning.
 """
 
 import configparser
@@ -8,7 +8,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-import scipy.linalg as la
 
 
 class DeepQNetwork(nn.Module):
@@ -16,10 +15,12 @@ class DeepQNetwork(nn.Module):
     Deep Q-Network class for reinforcement learning.
 
     Args:
-        config_file (str): Path to the configuration file. Contains the parameters for the network.
+        config_file (str): Path to the configuration file.
+        Contains the parameters for the network.
 
     Attributes:
-        n2 (int): Number of features. Two times the length of the chain, since coefficients have real and imaginary parts.
+        n2 (int): Number of features. Two times the length of the chain, since
+        coefficients have real and imaginary parts.
         fc1_dims (int): Number of units in the first fully connected layer.
         fc2_dims (int): Number of units in the second fully connected layer.
         n_actions (int): Number of possible actions.
@@ -33,7 +34,7 @@ class DeepQNetwork(nn.Module):
 
     Methods:
         forward(state): Performs forward pass through the network.
-        _initialize_weights_normal(): Initializes the weights of the linear layers.
+        _initialize_weights_normal(): Initializes the weights of the layers.
 
     """
 
@@ -50,7 +51,8 @@ class DeepQNetwork(nn.Module):
         self.fc1_dims = config.getint("learning_parameters", "fc1_dims")
         self.fc2_dims = config.getint("learning_parameters", "fc2_dims")
         self.n_actions = config.getint("system_parameters", "n_actions")
-        self.dropout = nn.Dropout(p=config.getfloat("learning_parameters", "dropout"))
+        self.dropout = nn.Dropout(p=config.getfloat("learning_parameters",
+                                                    "dropout"))
         lr = config.getfloat("learning_parameters", "learning_rate")
 
         # define layers
@@ -90,7 +92,8 @@ class DeepQNetwork(nn.Module):
 
     def _initialize_weights_normal(self):
         """
-        Initializes the weights of the linear layers using a normal distribution.
+        Initializes the weights of the linear layers using a normal
+        distribution.
 
         """
         for m in self.modules():
@@ -111,13 +114,13 @@ class Agent(object):
 
         Attributes:
         - gamma (float): Discount factor for future rewards.
-        - epsilon (float): Exploration rate for epsilon-greedy action selection.
+        - epsilon (float): Exploration rate for epsilon-greedy selection.
         - eps_min (float): Minimum value for epsilon.
         - eps_dec (float): Decay rate for epsilon.
         - lr (float): Learning rate for the neural networks.
         - mem_size (int): Size of the replay memory.
-        - batch_size (int): Number of samples to train on in each learning iteration.
-        - replace_target (int): Number of iterations to update the target network.
+        - batch_size (int): Number of samples to train in learning iterations.
+        - replace_target (int): Iterations to update target network.
         - action_space (list): List of possible actions.
         - mem_cntr (int): Counter for the replay memory.
         - iter_cntr (int): Counter for the number of iterations.
@@ -126,8 +129,8 @@ class Agent(object):
         - action_memory (ndarray): Memory for storing actions.
         - reward_memory (ndarray): Memory for storing rewards.
         - terminal_memory (ndarray): Memory for storing terminal states.
-        - Q_eval (DeepQNetwork): Neural network for Q-value estimation.
-        - Q_target (DeepQNetwork): Target neural network for Q-value estimation.
+        - Q_eval (DeepQNetwork): Evaluation network for Q-value estimation.
+        - Q_target (DeepQNetwork): Target network for Q-value estimation.
         """
         config_agent = configparser.ConfigParser()
         config_agent.read(config_file)
@@ -138,16 +141,23 @@ class Agent(object):
         # learning parameters
         self.gamma = config_agent.getfloat("learning_parameters", "gamma")
         self.epsilon = config_agent.getfloat("learning_parameters", "epsilon")
-        self.eps_min = config_agent.getfloat("learning_parameters", "epsilon_minimum")
-        self.eps_dec = config_agent.getfloat("learning_parameters", "epsilon_decay")
+        self.eps_min = config_agent.getfloat("learning_parameters",
+                                             "epsilon_minimum")
+        self.eps_dec = config_agent.getfloat("learning_parameters",
+                                             "epsilon_decay")
         self.lr = config_agent.getfloat("learning_parameters", "learning_rate")
-        self.mem_size = config_agent.getint("learning_parameters", "memory_size")
-        self.batch_size = config_agent.getint("learning_parameters", "batch_size")
-        self.replace_target = config_agent.getint("learning_parameters", "replace_target_iter")
+        self.mem_size = config_agent.getint("learning_parameters",
+                                            "memory_size")
+        self.batch_size = config_agent.getint("learning_parameters",
+                                              "batch_size")
+        self.replace_target = config_agent.getint(
+            "learning_parameters", "replace_target_iter"
+        )
 
         # action space: 16 actions
         self.action_space = [
-            i for i in range(config_agent.getint("system_parameters", "n_actions"))
+            i for i in range(config_agent.getint("system_parameters",
+                                                 "n_actions"))
         ]
 
         # initialize iteration counters
@@ -174,7 +184,8 @@ class Agent(object):
             action (int): The action taken by the agent.
             reward (float): The reward received from the environment.
             state_ (object): The next state of the environment.
-            terminal (bool): Indicates whether the episode terminated after this transition.
+            terminal (bool): Indicates whether the episode terminated after
+            this transition.
 
         Returns:
             None
@@ -188,49 +199,54 @@ class Agent(object):
         self.mem_cntr += 1
 
     def choose_action(self, observation):
-            """
-            Selects an action based on the given observation and the current epsilon value.
+        """
+        Selects an action based on the given observation
+        and the current epsilon value.
 
-            Parameters:
-                observation (array-like): The current observation/state.
+        Parameters:
+            observation (array-like): The current observation/state.
 
-            Returns:
-                int: The selected action.
-            """
-            state = T.tensor([observation]).to(self.Q_eval.device)
+        Returns:
+            int: The selected action.
+        """
+        state = T.tensor([observation]).to(self.Q_eval.device)
 
-            if np.random.uniform() > self.epsilon:
-                actions = self.Q_eval.forward(state)
-                action = T.argmax(actions).item()
-            else:
-                action = np.random.choice(self.action_space)
-            return action
+        if np.random.uniform() > self.epsilon:
+            actions = self.Q_eval.forward(state)
+            action = T.argmax(actions).item()
+        else:
+            action = np.random.choice(self.action_space)
+        return action
 
     def update_target_network(self):
         """
-        Updates the target network by loading the state dictionary of the evaluation network.
+        Updates the target network by loading the state dictionary
+        of the evaluation network.
         """
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
 
     def learn(self):
         """
-        Learning method for the agent. Samples a batch from the replay memory and performs a Q-value update.
+        Learning method for the agent. Samples a batch from the replay memory
+        and performs a Q-value update.
 
         Attributes:
             max_mem (int): The maximum number of samples in the memory.
             batch (ndarray): A random sample of indices from the memory.
-            batch_index (ndarray): An array of indices from 0 to the batch size.
+            batch_index (ndarray): Array of indices from 0 to the batch size.
             state_batch (Tensor): The batch of states.
             new_state_batch (Tensor): The batch of new states.
             action_batch (ndarray): The batch of actions.
             reward_batch (Tensor): The batch of rewards.
             terminal_batch (Tensor): The batch of terminal states.
-            q_eval (Tensor): The Q-values of the evaluation network for the given states and actions.
-            q_next (Tensor): The Q-values of the target network for the new states.
+            q_eval (Tensor): The Q-values of the evaluation network for
+                             the given states and actions.
+            q_next (Tensor): The Q-values of the target network
+                             for the new states.
             q_target (Tensor): The target Q-values for the Q-value update.
             loss (Tensor): The loss value for the Q-value update.
         """
-        
+
         if self.mem_cntr < self.batch_size:
             return
         if self.iter_cntr % self.replace_target == 0:
@@ -244,17 +260,20 @@ class Agent(object):
         batch_index = np.arange(self.batch_size, dtype=np.int32)
 
         state_batch = T.tensor(self.state_memory[batch]).to(self.Q_eval.device)
-        new_state_batch = T.tensor(self.new_state_memory[batch]).to(self.Q_eval.device)
+        new_state_batch = T.tensor(self.new_state_memory[batch]).\
+            to(self.Q_eval.device)
         action_batch = self.action_memory[batch]
-        reward_batch = T.tensor(self.reward_memory[batch]).to(self.Q_eval.device)
-        terminal_batch = T.tensor(self.terminal_memory[batch]).to(self.Q_eval.device)
+        reward_batch = T.tensor(self.reward_memory[batch]).\
+            to(self.Q_eval.device)
+        terminal_batch = T.tensor(self.terminal_memory[batch]).\
+            to(self.Q_eval.device)
 
-    
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_next = self.Q_target.forward(new_state_batch)
         q_next[terminal_batch] = 0.0
         q_target = q_eval.clone()
-        q_target[batch_index] = reward_batch + self.gamma * T.max(q_next, dim=1)[0]
+        q_target[batch_index] = reward_batch + self.gamma *\
+            T.max(q_next, dim=1)[0]
 
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
@@ -263,7 +282,7 @@ class Agent(object):
 
         self.iter_cntr += 1
 
-
         self.epsilon = (
-            self.epsilon - self.eps_dec if self.epsilon > self.eps_min else self.eps_min
+            self.epsilon - self.eps_dec if self.epsilon > self.eps_min
+            else self.eps_min
         )
