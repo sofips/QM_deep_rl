@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/949985406690852362/bf1c1e18670f41cfb7ee5a6541eab2f8/artifacts
+end_time: 1739102520593
+entry_point_name: ''
+experiment_id: '949985406690852362'
+lifecycle_stage: active
+run_id: bf1c1e18670f41cfb7ee5a6541eab2f8
+run_name: gpunew_20250209_090157
+run_uuid: bf1c1e18670f41cfb7ee5a6541eab2f8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1739102520483
+status: 4
+tags: []
+user_id: sofi

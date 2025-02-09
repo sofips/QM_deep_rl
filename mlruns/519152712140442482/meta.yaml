@@ -1,0 +1,6 @@
+artifact_location: mlflow-artifacts:/519152712140442482
+creation_time: 1739102323666
+experiment_id: '519152712140442482'
+last_update_time: 1739102323666
+lifecycle_stage: active
+name: gpu

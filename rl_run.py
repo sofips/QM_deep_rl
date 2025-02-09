@@ -9,7 +9,7 @@ import datetime
 import mlflow
 from mlflow.tracking import MlflowClient
 import time
-
+import torch as T
 """
 Implementation of the algorithm developed in the work of Zhang et.
 al (https://doi.org/10.1103/PhysRevA.97.052333). The following
@@ -59,16 +59,17 @@ f1 = open(filename, "w")
 filename = directory + "/actions.dat"
 f2 = open(filename, "w")
 
-tracking_uri = "http://127.0.0.1:5000"
+tracking_uri = "http://127.0.0.1:5005"
+client = MlflowClient(tracking_uri=tracking_uri)
 
 new_experiment = config.getboolean("experiment", "new_experiment")
-
 if new_experiment:
-    client = MlflowClient(tracking_uri=tracking_uri)
+    print(f"Creating new experiment: {new_experiment}")
     experiment = client.create_experiment(name=experiment_name, tags=experiment_tags)
+    print(f"Experiment ID: {experiment}")
 
 experiment = mlflow.get_experiment_by_name(experiment_name)
-
+print(f"Experiment ID: {experiment.experiment_id}")
 # initialize environment and agent
 env = MyEnv(config_file)
 agent = Agent(config_file)
@@ -91,9 +92,9 @@ mlflow.set_tracking_uri(uri=tracking_uri)
 mlflow.set_experiment(experiment_name)
 
 with mlflow.start_run(run_name=run_name,nested=False):
-    mlflow.log_params(system_parameters)
-    mlflow.log_params(learning_parameters)
-    mlflow.set_tags(experiment_tags)
+    # mlflow.log_params(system_parameters)
+    # mlflow.log_params(learning_parameters)
+    # mlflow.set_tags(experiment_tags)
     for i in range(number_of_episodes):
 
         done = False
@@ -204,6 +205,7 @@ with mlflow.start_run(run_name=run_name,nested=False):
             action_sequence.append(fidelity)
             action_writer.writerow(action_sequence)
 
-        mlflow.pytorch.log_model(agent.Q_eval, "model")
-
+    mlflow.pytorch.log_model(agent.Q_eval, "model")
+    num_gpus = T.cuda.device_count()
+    print(f"Number of GPUs available: {num_gpus}")
     f1.close()

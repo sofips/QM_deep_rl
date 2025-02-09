@@ -8,6 +8,7 @@ from scipy.linalg import expm
 import scipy.linalg as la
 from gym import Env
 from gym.spaces import Discrete, Box
+import torch as T
 
 # constant i
 comp_i = complex(0, 1)
@@ -76,10 +77,10 @@ class MyEnv(Env):
         else:
             raise ValueError("Invalid action set. Choose 'zhang' or 'oaps'.")
 
-        self.energies = np.zeros((self.n_actions, self.n), dtype=np.complex_)
-        self.bases = np.zeros((self.n_actions, self.n, self.n), dtype=np.complex_)
-        self.propagators = np.zeros((self.n_actions, self.n, self.n), dtype=np.complex_)
-        self.sp_desc = np.zeros((self.n_actions, self.n, self.n), dtype=np.complex_)
+        self.energies = np.zeros((self.n_actions, self.n), dtype=np.complex128)
+        self.bases = np.zeros((self.n_actions, self.n, self.n), dtype=np.complex128)
+        self.propagators = np.zeros((self.n_actions, self.n, self.n), dtype=np.complex128)
+        self.sp_desc = np.zeros((self.n_actions, self.n, self.n), dtype=np.complex128)
 
         # ---------------------------------------------------------------------------
         # Calculate propagators using exponentials
@@ -116,9 +117,9 @@ class MyEnv(Env):
         # Set time to 0 and states to one excitation
 
         self.t_step = 0
-        self.cstate = np.zeros(self.n, dtype=np.complex_)
+        self.cstate = np.zeros(self.n, dtype=np.complex128)
         self.cstate[0] = 1
-        self.state = np.zeros(2 * self.n, dtype=np.float_)
+        self.state = np.zeros(2 * self.n, dtype=np.float64)
         self.state[0] = 1
 
     def step(self, action):
@@ -137,38 +138,47 @@ class MyEnv(Env):
             done (bool): Whether the episode is done or not.
 
         """
+
+        # Mover datos a la GPU si están en NumPy
+        if isinstance(self.state, np.ndarray):
+            self.state = T.tensor(self.state, dtype=T.float32, device="cuda")
+        if isinstance(self.propagators, np.ndarray):
+            self.propagators = T.tensor(self.propagators, dtype=T.complex64, device="cuda")
+
         config = self.config
-        self.t_step = self.t_step + 1
+        self.t_step += 1  # Más eficiente
 
-        j = 0
-        for i in np.arange(0, self.n):
-            self.cstate[i] = complex(self.state[j], self.state[j + 1])
-            j += 2
+        # Convertir a estado complejo en PyTorch
+        self.cstate = self.state[::2] + 1j * self.state[1::2]
 
-        self.cstate = np.matmul(self.propagators[action, :, :], self.cstate)
+        # Convertir a Tensor en GPU
+        self.cstate = T.tensor(self.cstate, dtype=T.complex64, device="cuda")
 
-        for i in np.arange(0, 2 * self.n, 2):
-            self.state[i] = np.real(self.cstate[i // 2])
-            self.state[i + 1] = np.imag(self.cstate[i // 2])
+        # Multiplicación de matrices en GPU
+        self.cstate = T.matmul(self.propagators[action, :, :], self.cstate)
 
-        fid = np.real(self.cstate[self.n - 1] * np.conjugate(self.cstate[self.n - 1]))
-        
-        reward = self.reward(self.state,
-                             self.propagators[action, :, :],
-                             self.t_step,
-                             config)
+        # Convertir de vuelta a real-imaginario
+        self.state[::2] = self.cstate.real
+        self.state[1::2] = self.cstate.imag
 
-        if (fid >= 1.0 - self.tolerance) or (self.t_step >= self.max_t_steps):
-            done = True
-        else:
-            done = False
-        
-        # check state normalization
-        if abs(la.norm(self.cstate) - 1.0) > 1e-8:
-            raise Exception(f"""State not normalized. 
-                             Norm: {la.norm(self.cstate)}""")
+        # Fidelity (en GPU)
+        fid = (self.cstate[self.n - 1] * self.cstate[self.n - 1].conj()).real
 
-        return self.state, self.cstate, self.t_step, fid, reward, done
+        # Reward function (aún en CPU si `reward` usa NumPy)
+        reward = self.reward(self.state.cpu().numpy(), 
+                            self.propagators[action, :, :].cpu().numpy(), 
+                            self.t_step, config)
+
+        # Check termination conditions
+        done = (fid >= 1.0 - self.tolerance) or (self.t_step >= self.max_t_steps)
+
+        # Normalization check (en GPU)
+        norm_cstate = T.linalg.norm(self.cstate)
+        if abs(norm_cstate - 1.0) > 1e-4:
+            raise Exception(f"State not normalized. Norm: {norm_cstate.item()}")
+
+        return self.state.cpu().numpy(), self.cstate.cpu().numpy(), self.t_step, fid.item(), reward, done
+
 
     def reset(self):
         """
@@ -182,9 +192,9 @@ class MyEnv(Env):
 
         """
 
-        self.cstate = np.zeros(self.n, dtype=np.complex_)
+        self.cstate = np.zeros(self.n, dtype=np.complex128)
         self.cstate[0] = 1
-        self.state = np.zeros(2 * self.n, dtype=np.float_)
+        self.state = np.zeros(2 * self.n, dtype=np.float64)
         self.state[0] = 1
         self.t_step = 0
 
