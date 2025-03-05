@@ -10,18 +10,45 @@ import mlflow
 from mlflow.tracking import MlflowClient
 import time
 import torch as T
-"""
-Implementation of the algorithm developed in the work of Zhang et.
-al (https://doi.org/10.1103/PhysRevA.97.052333). The following
-code uses Deep Reinforcement Learning to obtain an optimal
-sequence of magnetic fields that should be applied to the
-extremes of a spin chain in order to achieve a perfect
-transmission.
+import optuna
+optuna.logging.set_verbosity(optuna.logging.ERROR)
+from optuna.integration.mlflow import MLflowCallback
 
-Arguments:
- - config_file: configuration file with the parameters of the system and
- the reinforcement learning agent
 """
+Optimization of hyperparameters using Optuna.
+"""
+def champion_callback(study, frozen_trial):
+    """
+    Logging callback that will report when a new trial iteration improves upon existing
+    best trial values.
+
+    Note: This callback is not intended for use in distributed computing systems such as Spark
+    or Ray due to the micro-batch iterative implementation for distributing trials to a cluster's
+    workers or agents.
+    The race conditions with file system state management for distributed trials will render
+    inconsistent values with this callback.
+    """
+
+    winner = study.user_attrs.get("winner", None)
+
+    if study.best_value and winner != study.best_value:
+        study.set_user_attr("winner", study.best_value)
+        if winner:
+            improvement_percent = (
+                abs(winner - study.best_value) / study.best_value
+            ) * 100
+            print(
+                f"Trial {frozen_trial.number} achieved value: {frozen_trial.value} with "
+                f"{improvement_percent: .4f}% improvement"
+            )
+        else:
+            print(
+                f"Initial trial {frozen_trial.number} achieved value: {frozen_trial.value}"
+            )
+
+# set mlflow uri and experiment
+tracking_uri = "http://127.0.0.1:5005"
+mlflow.set_tracking_uri(tracking_uri)
 
 # access configuration file
 config_file = sys.argv[1]
@@ -33,6 +60,12 @@ experiment_name = config.get("experiment", "experiment_name")
 now = datetime.datetime.now()
 date_str = now.strftime("%Y%m%d_%H%M%S")
 run_name = f"{experiment_name}_{date_str}"
+
+client = MlflowClient(tracking_uri=tracking_uri)
+experiment = client.create_experiment(name=experiment_name)
+experiment = mlflow.get_experiment_by_name(experiment_name)
+mlflow.set_experiment(experiment_name)
+dirname = "drl_results/" + experiment_name
 
 # create directory to save results
 directory = "drl_results/" + run_name
