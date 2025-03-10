@@ -4,6 +4,7 @@
 
 import configparser
 import sys
+import os
 
 cname = sys.argv[1]
 config = configparser.ConfigParser()
@@ -112,3 +113,15 @@ config_name = cname + ".ini"
 
 with open(config_name, "w") as configfile:
     config.write(configfile)
+
+
+if run:
+    os.system("python3 rl_run.py " + config_name + ">> log.txt &" )
+    print(f"Experiment running for {number_of_episodes} episodes")
+    print(f"Chain length: {chain_length}")
+    print(f"Action set: {action_set}")
+    print(f"Reward function: {reward_function}")
+else:
+    print("Config file generated")
+    print("To run the experiment, type:")
+    print("python3 run_this.py " + configfile)  
