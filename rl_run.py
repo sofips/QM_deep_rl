@@ -71,8 +71,8 @@ else:
     experiment_id = experiment.experiment_id
     print(f"Experiment ID: {experiment_id}")
 # initialize environment and agent
-env = MyEnv(config_file)
-agent = Agent(config_file)
+env = MyEnv(config)
+agent = Agent(config)
 
 # initialize variables to save results
 scores = []

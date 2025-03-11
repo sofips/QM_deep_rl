@@ -20,7 +20,7 @@ class MyEnv(Env):
     dynamics / evolution, and rewards.
 
     Args:
-        config_file (str): Path to the configuration file.
+        config (config instance): config instance to access parameters
 
     Attributes:
         n (int): Chain length.
@@ -43,14 +43,12 @@ class MyEnv(Env):
 
     """
 
-    def __init__(self, config_file):
+    def __init__(self, config):
 
-        # read system parameters from file
-        self.config = configparser.ConfigParser()
+
         config = self.config
 
-        config.read(config_file)
-
+        # --------------------------------------------------------------------------
         self.n = config.getint("system_parameters", "chain_length")
         self.dt = config.getfloat("system_parameters", "tstep_length")
         self.tolerance = config.getfloat("system_parameters", "tolerance")
