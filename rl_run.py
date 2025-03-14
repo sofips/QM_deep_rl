@@ -68,6 +68,8 @@ if new_experiment:
     print(f"Experiment ID: {experiment_id}")
 else:
     experiment = mlflow.get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise RuntimeError(f"Experiment '{experiment_name}' does not exist.")
     experiment_id = experiment.experiment_id
     print(f"Experiment ID: {experiment_id}")
 # initialize environment and agent

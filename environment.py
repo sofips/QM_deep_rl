@@ -46,7 +46,7 @@ class MyEnv(Env):
     def __init__(self, config):
 
 
-        config = self.config
+        self.config = config
 
         # --------------------------------------------------------------------------
         self.n = config.getint("system_parameters", "chain_length")
