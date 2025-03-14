@@ -10,8 +10,7 @@ cname = sys.argv[1]
 config = configparser.ConfigParser()
 
 experiment_description = (
-    """ Experiment to test the performance of a reinforcement learning 
-        agent using pytorch.
+    """ Optimization of hyperparameters for chain of length 13 using oaps and full reward.
     """
 )
 
@@ -26,7 +25,7 @@ run = True if run == "y" else False if run == "n" else sys.exit("Error: y o n")
 #                         SYSTEM PARAMETERS                       #
 # -----------------------------------------------------------------#
 
-chain_length = 7
+chain_length = 13
 tstep_length = 0.15
 tolerance = 0.05
 max_t_steps = chain_length*5
@@ -38,7 +37,7 @@ coupling = 1
 # -----------------------------------------------------------------#
 
 number_of_features = 2 * chain_length
-number_of_episodes = 1000
+number_of_episodes = 30000
 step_learning_interval = 5
 
 learning_rate = 0.001
@@ -60,7 +59,7 @@ fc2_dims = 50
 dropout = 0.0
 
 
-reward_function = "original"  # "original" , "full reward", "ipr"
+reward_function = "full reward"  # "original" , "full reward", "ipr"
 action_set = "oaps"  # "zhang", "oaps" (action per site)
 n_actions = (
     16 if action_set == "zhang" else chain_length + 1

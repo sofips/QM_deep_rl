@@ -195,7 +195,7 @@ def run_state(config, agent, env):
         #     action_sequence.append(fidelity)
         #     action_writer.writerow(action_sequence)
 
-        mlflow.pytorch.log_model(agent.Q_eval, "model")
+        #mlflow.pytorch.log_model(agent.Q_eval, "model")
 
    
 
@@ -212,7 +212,9 @@ def run_state(config, agent, env):
 
 def objective(trial):
     step = 0
-    run_name = f'run_step{step}'
+    global ntrial
+    ntrial += 1
+    run_name = f'run_step{ntrial}'
 
     with mlflow.start_run(nested=True,run_name=run_name):
         step += 1
@@ -222,11 +224,16 @@ def objective(trial):
         true_success_training_rate = 0
         config_instance = config
         # Define hyperparameters using trial.suggest_* methods
-        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)
-        fc1_dims = trial.suggest_int("fc1_dims", 32, 512, log=True)
+        learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-1, log=True)
+        fc1_dims = trial.suggest_int("fc1_dims", 32, 256, log=True)
+        fc2_dims = trial.suggest_int("fc2_dims", 32, 256, log=True)
+        dropout = trial.suggest_float("dropout", 0.0, 0.3)
+
         config_instance.set("learning_parameters", "learning_rate", str(learning_rate))
         config_instance.set("learning_parameters", "fc1_dims", str(fc1_dims))
-
+        config_instance.set("learning_parameters", "fc2_dims", str(fc2_dims))
+        config_instance.set("learning_parameters", "dropout", str(dropout))
+        
         # initialize environment and agent
         env = MyEnv(config_instance)
         agent = Agent(config_instance)
@@ -280,15 +287,15 @@ def objective(trial):
             mlflow.log_metric("pruned_at_step", step)
             raise optuna.exceptions.TrialPruned()
 
-        return true_success_training_rate
+        return avg_Qvalue*max_fid
     
 
-
-run_name = "third_attempt"
+ntrial = 0
+run_name = "optuna_implementation"
 
 # Initiate the parent run and call the hyperparameter tuning child run logic
 with mlflow.start_run(
-    experiment_id=experiment.experiment_id, run_name=run_name
+    experiment_id=experiment.experiment_id, run_name=run_name,nested=True
 ):
     # Initialize the Optuna study
     study = optuna.create_study(direction="maximize")
