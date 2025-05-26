@@ -4,13 +4,13 @@
 
 import configparser
 import sys
+import os
 
 cname = sys.argv[1]
 config = configparser.ConfigParser()
 
 experiment_description = (
-    """ Experiment to test the performance of a reinforcement learning 
-        agent using pytorch.
+    """ Optimization of hyperparameters for chain of length 13 using oaps and full reward.
     """
 )
 
@@ -25,7 +25,7 @@ run = True if run == "y" else False if run == "n" else sys.exit("Error: y o n")
 #                         SYSTEM PARAMETERS                       #
 # -----------------------------------------------------------------#
 
-chain_length = 7
+chain_length = 13
 tstep_length = 0.15
 tolerance = 0.05
 max_t_steps = chain_length*5
@@ -37,7 +37,7 @@ coupling = 1
 # -----------------------------------------------------------------#
 
 number_of_features = 2 * chain_length
-number_of_episodes = 1000
+number_of_episodes = 30000
 step_learning_interval = 5
 
 learning_rate = 0.001
@@ -59,8 +59,8 @@ fc2_dims = 50
 dropout = 0.0
 
 
-reward_function = "original"  # "original" , "full reward", "ipr"
-action_set = "zhang"  # "zhang", "oaps" (action per site)
+reward_function = "full reward"  # "original" , "full reward", "ipr"
+action_set = "oaps"  # "zhang", "oaps" (action per site)
 n_actions = (
     16 if action_set == "zhang" else chain_length + 1
     if action_set == "oaps" 
@@ -112,3 +112,16 @@ config_name = cname + ".ini"
 
 with open(config_name, "w") as configfile:
     config.write(configfile)
+
+script_name = 'optuna_run.py'
+
+if run:
+    os.system("python3 "+ script_name +' '  + config_name + ">> log.txt &" )
+    print(f"Experiment running for {number_of_episodes} episodes")
+    print(f"Chain length: {chain_length}")
+    print(f"Action set: {action_set}")
+    print(f"Reward function: {reward_function}")
+else:
+    print("Config file generated")
+    print("To run the experiment, type:")
+    print("python3 run_this.py " + configfile)  

@@ -15,7 +15,7 @@ class DeepQNetwork(nn.Module):
     Deep Q-Network class for reinforcement learning.
 
     Args:
-        config_file (str): Path to the configuration file.
+        config (str): config instance to access parameters
         Contains the parameters for the network.
 
     Attributes:
@@ -38,13 +38,11 @@ class DeepQNetwork(nn.Module):
 
     """
 
-    def __init__(self, config_file):
+    def __init__(self, config):
 
         super(DeepQNetwork, self).__init__()
 
-        # access configuration file
-        config = configparser.ConfigParser()
-        config.read(config_file)
+
 
         # import values for net parameters
         self.n2 = config.getint("learning_parameters", "number_of_features")
@@ -105,13 +103,12 @@ class DeepQNetwork(nn.Module):
 
 class Agent(object):
 
-    def __init__(self, config_file):
+    def __init__(self, config_agent):
         """
         Initialize the Agent object.
 
         Parameters:
-        - config_file (str): Path to the configuration file.
-
+        - config_agent (str): config instance to access system parameters
         Attributes:
         - gamma (float): Discount factor for future rewards.
         - epsilon (float): Exploration rate for epsilon-greedy selection.
@@ -132,8 +129,7 @@ class Agent(object):
         - Q_eval (DeepQNetwork): Evaluation network for Q-value estimation.
         - Q_target (DeepQNetwork): Target network for Q-value estimation.
         """
-        config_agent = configparser.ConfigParser()
-        config_agent.read(config_file)
+
 
         # number of features, 2*n where n is the length of the chain
         n2 = config_agent.getint("learning_parameters", "number_of_features")
@@ -172,8 +168,8 @@ class Agent(object):
         self.terminal_memory = np.zeros(self.mem_size, dtype=bool)
 
         # initialize neural networks
-        self.Q_eval = DeepQNetwork(config_file)
-        self.Q_target = DeepQNetwork(config_file)
+        self.Q_eval = DeepQNetwork(config_agent)
+        self.Q_target = DeepQNetwork(config_agent)
 
     def store_transition(self, state, action, reward, state_, terminal):
         """

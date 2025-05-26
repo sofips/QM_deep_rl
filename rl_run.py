@@ -58,20 +58,23 @@ f1 = open(filename, "w")
 filename = directory + "/actions.dat"
 f2 = open(filename, "w")
 
-tracking_uri = "http://127.0.0.1:5005"
+tracking_uri = "http://127.0.0.1:5768"
 client = MlflowClient(tracking_uri=tracking_uri)
 
 new_experiment = config.getboolean("experiment", "new_experiment")
 if new_experiment:
-    print(f"Creating new experiment: {new_experiment}")
-    experiment = client.create_experiment(name=experiment_name, tags=experiment_tags)
-    print(f"Experiment ID: {experiment}")
-
-experiment = mlflow.get_experiment_by_name(experiment_name)
-print(f"Experiment ID: {experiment.experiment_id}")
+    print(f"Creating new experiment: {experiment_name}")
+    experiment_id = client.create_experiment(name=experiment_name, tags=experiment_tags)
+    print(f"Experiment ID: {experiment_id}")
+else:
+    experiment = mlflow.get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise RuntimeError(f"Experiment '{experiment_name}' does not exist.")
+    experiment_id = experiment.experiment_id
+    print(f"Experiment ID: {experiment_id}")
 # initialize environment and agent
-env = MyEnv(config_file)
-agent = Agent(config_file)
+env = MyEnv(config)
+agent = Agent(config)
 
 # initialize variables to save results
 scores = []
